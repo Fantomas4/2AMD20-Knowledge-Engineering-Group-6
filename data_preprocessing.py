@@ -56,10 +56,8 @@ female_counts = female_df.groupby('State')['Bachelor\'s Degree Holders'].sum()
 # Calculate the ratio of men to women for each state
 ratio = male_counts / female_counts
 
-# # Print the resulting ratio
-# print(ratio)
-
-df_2['Men to Women Ratio'] = df_2['State'].map(ratio)
+# Create a new column in df_1 and map the men/women ratios there based on the "State" value of each entry.
+df_1['Men to Women Ratio'] = df_1['State'].map(ratio)
 
 
 # For the Bachelor's dataset (df_2), drop any rows where "Sex" == "Total"
