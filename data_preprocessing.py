@@ -190,4 +190,7 @@ report_2 = sv.analyze(df_2)
 report_1.show_html('cbp_report.html')
 report_2.show_html('bachelor_report.html')
 
+print("> Saving preprocessed datasets to .csv files...")
+df_1.to_csv('datasets/CBP_preprocessed.csv', index=False)
+df_2.to_csv('datasets/Bachelor_preprocessed.csv', index=False)
 
