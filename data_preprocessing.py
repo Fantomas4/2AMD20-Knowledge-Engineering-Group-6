@@ -43,7 +43,7 @@ numeric_columns = ["Bachelor's Degree Holders", "Science and Engineering", "Scie
                    "Business", "Education", "Arts, Humanities and Others"]
 df_2[numeric_columns] = df_2[numeric_columns].apply(pd.to_numeric)
 
-
+# ============================= Data Exchange ===============================
 # Generate a new "Men to Women Ratio" column that contains the men to women bachelor holders ratio for each state
 # Filter the DataFrame for "Male" and "Female" separately
 male_df = df_2[df_2['Sex'] == 'Male']
@@ -59,6 +59,62 @@ ratio = male_counts / female_counts
 # Create a new column in df_1 and map the men/women ratios there based on the "State" value of each entry.
 df_1['Men to Women Ratio'] = df_1['State'].map(ratio)
 
+
+# Determine the field that has the largest and second-largest number of graduates per State
+# Filter the dataset to keep only rows where "Sex" is equal to "Total"
+filtered_df = df_2[df_2["Sex"] == "Total"]
+
+# Group the filtered DataFrame by "State"
+grouped_df = filtered_df.groupby("State")
+
+# Create an empty dictionary to store the results
+state_column_dict = {}
+
+# Determine the most popular field of studies
+# Iterate over each distinct value of "State"
+for state, group in grouped_df:
+    # Calculate the summed values for each column
+    summed_values = group[["Science and Engineering", "Science and Engineering Related Fields", "Business", "Education",
+                           "Arts, Humanities and Others"]].sum()
+
+    # Find the column with the highest summed value
+    max_column = summed_values.idxmax()
+
+    # Save the column name to the state:column dictionary
+    state_column_dict[state] = max_column
+
+# Add the new column to the df_2 dataframe
+df_1["Most Popular Degree Field"] = df_2["State"].map(state_column_dict)
+
+# Display the updated df_2 dataframe
+print(df_1)
+
+# Determine the 2nd most popular field of studies
+# Iterate over each distinct value of "State"
+for state, group in grouped_df:
+    # Calculate the summed values for each column
+    summed_values = group[["Science and Engineering", "Science and Engineering Related Fields", "Business", "Education",
+                           "Arts, Humanities and Others"]].sum()
+
+    # Sort the summed values in descending order and get the column name with the second largest summed value
+    second_largest_column = summed_values.sort_values(ascending=False).index[1]
+
+    # Save the column name to the state:column dictionary
+    state_column_dict[state] = second_largest_column
+
+# Add the new column to the df_2 dataframe
+df_1["2nd Most Popular Degree Field"] = df_2["State"].map(state_column_dict)
+
+# Display the updated df_2 dataframe
+print(df_1)
+
+
+# Specify the columns to be printed
+columns_to_print = ["Most Popular Degree Field", "2nd Most Popular Degree Field"]
+
+# Print all rows of specified columns
+print(df_1[columns_to_print])
+# ============================================================================
 
 # For the Bachelor's dataset (df_2), drop any rows where "Sex" == "Total"
 df_2 = df_2[(df_2["Sex"] != "Total")]
