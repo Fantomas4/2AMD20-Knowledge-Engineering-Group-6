@@ -12,6 +12,10 @@ columns_to_drop = ["Year (YEAR)", "Meaning of NAICS code (NAICS2017_LABEL)", "20
 df_1 = df_1.drop(columns_to_drop, axis=1)
 
 
+# Since we dropped some columns, some rows have become duplicates of others. Thus, we proceed to drop them.
+df_1 = df_1.drop_duplicates()
+
+
 # Rename the columns of df_1 to make them easier to work with
 column_rename_mapping = {
     "Geographic Area Name (NAME)": "State",
@@ -75,7 +79,8 @@ numeric_columns = ["Bachelor's Degree Holders", "Science and Engineering", "Scie
                    "Business", "Education", "Arts, Humanities and Others"]
 df_2[numeric_columns] = df_2[numeric_columns].apply(pd.to_numeric)
 
-# ============================= Data Exchange ===============================
+
+# ================================== Data Exchange ====================================
 # ====== Generate a new "Men to Women Ratio" column in df_1 that contains the men to women
 # bachelor holders ratio for each state
 # Filter the DataFrame for "Male" and "Female" separately
