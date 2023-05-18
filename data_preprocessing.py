@@ -4,7 +4,7 @@ import sweetviz as sv
 # Load the dataset (example: iris dataset)
 df_1 = pd.read_csv('datasets/CBP2019.CB1900CBP-2023-05-14T012245.csv')
 df_2 = pd.read_csv('datasets/Bachelor_Degree_Majors.csv')
-
+df_3 = pd.read_csv('datasets/state_regions.csv')
 
 # Drop any columns from df_1 that we do not need for our analysis
 columns_to_drop = ["Year (YEAR)", "Meaning of NAICS code (NAICS2017_LABEL)", "2017 NAICS code (NAICS2017)",
@@ -44,12 +44,6 @@ values_to_keep = [
 df_1 = df_1[df_1["Business size"].isin(values_to_keep)]
 
 
-# Get the common values between the "State" columns of the 2 datasets (df_1 and df_2)
-common_values = pd.Series(list(set(df_1['State']).intersection(set(df_2['State']))))
-print("\n> States included both in CBP and in Bachelor Majors dataset: {}".format(len(common_values)))
-print(common_values)
-
-
 # Get the non-common values between the "State" columns of the 2 datasets (df_1 and df_2)
 symmetric_difference = pd.Series(list(set(df_1['State']).symmetric_difference(set(df_2['State']))))
 print("\n> States included in CBP but not in Bachelor Majors dataset: {}".format(len(symmetric_difference)))
@@ -73,6 +67,10 @@ for column in df_2.columns:
     # Remove commas from values
     df_2[column] = df_2[column].str.replace(',', '')
 
+# Convert df_1 number columns to numeric values
+numeric_columns = ["Average #establishments", "Average annual payroll", "Average first-quarter payroll",
+                   "Average #employees"]
+df_1[numeric_columns] = df_1[numeric_columns].apply(pd.to_numeric)
 
 # Convert df_2 number columns to numeric values
 numeric_columns = ["Bachelor's Degree Holders", "Science and Engineering", "Science and Engineering Related Fields",
@@ -81,6 +79,10 @@ df_2[numeric_columns] = df_2[numeric_columns].apply(pd.to_numeric)
 
 
 # ================================== Data Exchange ====================================
+# ====== Add the information from the "State Regions" dataset (df_3) to CBP (df_1) as a new column
+df_1 = pd.merge(df_1, df_3, on='State', how='left')
+df_1 = pd.merge(df_1, df_3, on='State', how='left')
+
 # ====== Generate a new "Men to Women Ratio" column in df_1 that contains the men to women
 # bachelor holders ratio for each state
 # Filter the DataFrame for "Male" and "Female" separately
@@ -124,12 +126,6 @@ for state, group in grouped_df:
 
 # Add the new column to the df_2 dataframe
 df_1["Most popular degree field"] = df_1["State"].map(state_column_dict)
-
-# # Display the updated df_1 dataframe
-# print("len 1: ", len(state_column_dict))
-# for key, value in state_column_dict.items():
-#     print(key + ":" + value)
-# print(df_1)
 
 # ==== Determine the 2nd most popular field of studies
 # Iterate over each distinct value of "State"
