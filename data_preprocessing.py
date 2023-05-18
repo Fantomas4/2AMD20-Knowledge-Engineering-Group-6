@@ -33,8 +33,8 @@ df_1.rename(columns=column_rename_mapping, inplace=True)
 df_1 = df_1[(df_1["Business size"] != "All establishments")]
 
 # Contradiction mitigatino: For the Bachelor's dataset, replace all "25 and older" values of the "Age Group" column
-# with the value "25 and younger"
-df_2['Age Group'] = df_2['Age Group'].replace('25 and older', '25 and younger')
+# with the value "younger than 25"
+df_2['Age Group'] = df_2['Age Group'].replace('25 and older', 'younger than 25')
 
 
 # For the CPB dataset (df_1), only keep the rows where the value of the "Business size" attribute refers to a company
