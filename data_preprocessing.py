@@ -81,7 +81,6 @@ df_2[numeric_columns] = df_2[numeric_columns].apply(pd.to_numeric)
 # ================================== Data Exchange ====================================
 # ====== Add the information from the "State Regions" dataset (df_3) to CBP (df_1) as a new column
 df_1 = pd.merge(df_1, df_3, on='State', how='left')
-df_1 = pd.merge(df_1, df_3, on='State', how='left')
 
 # ====== Generate a new "Men to Women Ratio" column in df_1 that contains the men to women
 # bachelor holders ratio for each state
