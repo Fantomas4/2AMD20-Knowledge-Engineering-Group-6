@@ -22,7 +22,7 @@ def update_choropleth(target_df, focused_attribute, selected_establishment_sizes
     # Filter target_df based on the selected establishment sizes
     if selected_establishment_sizes is None:
         selected_establishment_sizes = []
-    filtered_df = target_df[target_df['Business size'].isin(selected_establishment_sizes)]
+    target_df = target_df[target_df['Business size'].isin(selected_establishment_sizes)]
 
     aggr_str_mapping = {'mean': 'Mean',
                         'min': 'Min.', 'max': 'Max.'}
@@ -30,9 +30,9 @@ def update_choropleth(target_df, focused_attribute, selected_establishment_sizes
     agg_attribute = aggr_str_mapping[aggregation] + ' ' + focused_attribute
 
     # Perform the selected aggregation on the dataframe
-    filtered_df[agg_attribute] = filtered_df.groupby("State")[focused_attribute].transform(aggregation)
+    target_df[agg_attribute] = target_df.groupby("State")[focused_attribute].transform(aggregation)
 
-    fig = px.choropleth(data_frame=filtered_df,
+    fig = px.choropleth(data_frame=target_df,
                         locations="State code",
                         locationmode="USA-states",
                         hover_name="State",
@@ -71,25 +71,30 @@ def update_choropleth(target_df, focused_attribute, selected_establishment_sizes
 #     return fig
 
 
-# def update_histogram(target_df, selected_data, focused_attribute):
-#     if selected_data:
-#         # If a data selection is provided, filter target_df accordingly
-#         neighbourhoods = [x['location'] for x in selected_data['points']]
-#         target_df = target_df[target_df['neighbourhood'].isin(
-#             neighbourhoods)]
-#
-#     fig = px.histogram(target_df[attr_mapping_dict[focused_attribute]])
-#     fig.update_xaxes(title="Value")
-#     fig.update_yaxes(title="Count")
-#     fig.update_layout(legend=dict(
-#         orientation="h",
-#         yanchor="bottom",
-#         y=1.02,
-#         xanchor="left",
-#     ))
-#     fig.update_layout(legend_title_text='Variable:', margin=dict(r=10,b=4,t=4,l=3))
-#
-#     return fig
+def update_histogram(target_df, focused_attribute, selected_data=None, selected_establishment_sizes=None):
+    # Filter target_df based on the selected establishment sizes
+    if selected_establishment_sizes is None:
+        selected_establishment_sizes = []
+    target_df = target_df[target_df['Business size'].isin(selected_establishment_sizes)]
+
+    if selected_data:
+        # If a data selection is provided, filter target_df accordingly
+        states = [x['location'] for x in selected_data['points']]
+        target_df = target_df[target_df['State code'].isin(states)]
+        print(selected_data)
+
+    fig = px.histogram(target_df[focused_attribute])
+    fig.update_xaxes(title="Value")
+    fig.update_yaxes(title="Count")
+    fig.update_layout(legend=dict(
+        orientation="h",
+        yanchor="bottom",
+        y=1.02,
+        xanchor="left",
+    ))
+    fig.update_layout(legend_title_text='Variable:', margin=dict(r=10,b=4,t=4,l=3))
+
+    return fig
 
 
 # def update_heatmap(target_df, selected_data, focused_attribute, x_choice="review rate number", y_choice="room type", aggregate_value='avg'):
@@ -136,10 +141,10 @@ if __name__ == '__main__':
     # # Initialize PCP figure
     # initial_pcp_dimensions = ['availability 365', 'minimum nights', 'service fee', 'number of reviews', 'Construction year', 'review rate number', 'price']
     # pcp_fig = update_pcp(airbnb_df, None, default_focused_attr, initial_pcp_dimensions)
-    #
-    # # Initialize histogram figure
-    # histogram_fig = update_histogram(airbnb_df, None, default_focused_attr)
-    #
+
+    # Initialize histogram figure
+    histogram_fig = update_histogram(cbp_df, default_focused_attr)
+
     # # Initialize heatmap figure
     # heatmap_fig = update_heatmap(airbnb_df, None, default_focused_attr)
 
@@ -185,12 +190,12 @@ if __name__ == '__main__':
                        "background-color": 'rgba(0, 0, 255, 0.0)'},
                 children=[
                     html.H5('Ordered Attribute Distribution', id='attribute-label'),
-                    # dcc.Loading(
-                    #     id="loading-3",
-                    #     type="default",
-                    #     children=[html.Div(id="loading-output-histogram"),
-                    #               dcc.Graph(id='distr', figure=histogram_fig)]
-                    # ),
+                    dcc.Loading(
+                        id="loading-3",
+                        type="default",
+                        children=[html.Div(id="loading-output-histogram"),
+                                  dcc.Graph(id='histogram', figure=histogram_fig)]
+                    ),
                     html.H5("Categorical Attribute Correlations", id='heatmap-val'),
                     # dcc.Loading(
                     #     id="loading-4",
@@ -205,7 +210,7 @@ if __name__ == '__main__':
     # @app.callback(
     #     Output("heatmap-x-axis-dropdown", "options"),
     #     Input('heatmap-y-axis-dropdown', 'value'),
-    #     Input("select-map-mode", "value"))
+    #     Input("select-focused-attribute", "value"))
     # def set_heatmap_x_dropdown_options(y_choice, focused_attribute):
     #     """
     #     Used for the application callback that applies a custom rule to determine which dropdown options should be made
@@ -232,7 +237,7 @@ if __name__ == '__main__':
     # @app.callback(
     #     Output("heatmap-y-axis-dropdown", "options"),
     #     Input('heatmap-x-axis-dropdown', 'value'),
-    #     Input("select-map-mode", "value"))
+    #     Input("select-focused-attribute", "value"))
     # def set_heatmap_y_dropdown_options(x_choice, focused_attribute):
     #     """
     #     Used for the application callback that applies a custom rule to determine which dropdown options should be made
@@ -261,7 +266,7 @@ if __name__ == '__main__':
     #     Output("heatmap-y-axis-dropdown", "value"),
     #     State("heatmap-x-axis-dropdown", "value"),
     #     State("heatmap-y-axis-dropdown", "value"),
-    #     Input("select-map-mode", "value"))
+    #     Input("select-focused-attribute", "value"))
     # def set_heatmap_dropdown_values(cur_x_value, cur_y_value, focused_attribute):
     #     """
     #     Used for the application callback that applies a custom rule to set the heatmap "X axis" and "Y axis" dropdown
@@ -284,46 +289,63 @@ if __name__ == '__main__':
     # @app.callback(
     #     Output("pcp-graph", "figure"),
     #     Output("loading-output-pcp", "children"),
-    #     Input("select-map-mode", "value"),
+    #     Input("select-focused-attribute", "value"),
     #     Input('choropleth-mapbox', 'selectedData'),
     #     Input('pcp-checklist', 'value'))
     # def choropleth_area_selection_changed(focused_attribute, selected_data, checklist_values):
     #     return update_pcp(airbnb_df, selected_data, focused_attribute, checklist_values), None
 
-    # @app.callback(
-    #     Output("attribute-label", "children"),
-    #     Input("select-map-mode", "value"))
-    # def update_distribution_label(focused_attribute):
-    #     return "Distribution of " + [k for k, v in focused_attr_dict.items() if v == focused_attribute][0]
 
     @app.callback(
         Output("choropleth-mapbox", "figure"),
+        Output("attribute-label", "children"),
         Output("loading-output-choropleth", "children"),
-        Input("select-map-mode", "value"),
-        Input("heatmap-aggregate-dropdown", "value"),
+        Input("select-focused-attribute", "value"),
+        Input("aggregation-dropdown", "value"),
         Input("establishment-size-checklist", "value"))
-    def update_choropleth_mode(selected_map_mode, aggregate_func, selected_establishment_sizes):
-        return update_choropleth(cbp_df, selected_map_mode, selected_establishment_sizes=selected_establishment_sizes, aggregation=aggregate_func), None
+    def update_choropleth_view(focused_attribute, aggregate_func, selected_establishment_sizes):
+        return update_choropleth(cbp_df, focused_attribute, selected_establishment_sizes=selected_establishment_sizes, aggregation=aggregate_func),\
+               "Distribution of {}".format(focused_attribute), \
+               None
+
+
+
+    @app.callback(
+        Output("histogram", "figure"),
+        Output("loading-output-histogram", "children"),
+        Input('choropleth-mapbox', 'selectedData'),
+        Input("select-focused-attribute", "value"),
+        Input("establishment-size-checklist", "value"))
+    def update_histogram_view(selected_data, focused_attribute, selected_establishment_sizes):
+        return update_histogram(cbp_df, focused_attribute, selected_data=selected_data, selected_establishment_sizes=selected_establishment_sizes), None
+
+
+
+
 
     # @app.callback(
     #     Output("distr", "figure"),
-    #     Output("heatmap", "figure"),
+    #     # Output("heatmap", "figure"),
     #     Output("loading-output-histogram", "children"),
-    #     Output("loading-output-heatmap", "children"),
+    #     # Output("loading-output-heatmap", "children"),
     #     Input('choropleth-mapbox', 'selectedData'),
-    #     Input("select-map-mode", "value"),
-    #     Input("heatmap-x-axis-dropdown", "value"),
-    #     Input("heatmap-y-axis-dropdown", "value"),
-    #     Input("heatmap-aggregate-dropdown", "value"))
-    # def choropleth_mode_selection_changed(selected_data, focused_attribute, x_choice, y_choice, aggregate_value):
-    #     return update_histogram(airbnb_df, selected_data, focused_attribute), update_heatmap(airbnb_df, selected_data, focused_attribute, x_choice, y_choice, aggregate_value), None, None
+    #     Input("select-focused-attribute", "value"),
+    #     # Input("heatmap-x-axis-dropdown", "value"),
+    #     # Input("heatmap-y-axis-dropdown", "value"),
+    #     Input("aggregation-dropdown", "value"))
+    # def choropleth_mode_selection_changed(selected_data, focused_attribute, aggregate_func):
+    # # def choropleth_mode_selection_changed(selected_data, focused_attribute, x_choice, y_choice, aggregate_value):
+    #     # TODO: Also include heatmap update here!
+    #     # return update_histogram(cbp_df, selected_data, focused_attribute), update_heatmap(cbp_df, selected_data, focused_attribute, x_choice, y_choice, aggregate_value), None, None
+    #     return update_histogram(cbp_df, selected_data, focused_attribute), None
+
 
     # @app.callback(
     #     Output("heatmap-val", "children"),
-    #     Input("select-map-mode", "value"),
+    #     Input("select-focused-attribute", "value"),
     #     Input("heatmap-x-axis-dropdown", "value"),
     #     Input("heatmap-y-axis-dropdown", "value"),
-    #     Input("heatmap-aggregate-dropdown", "value"))
+    #     Input("aggregation-dropdown", "value"))
     # def update_heatmap_label(focused_attribute, x_choice, y_choice, aggregate_value):
     #     """
     #     Used to set the text of the heatmap idiom label

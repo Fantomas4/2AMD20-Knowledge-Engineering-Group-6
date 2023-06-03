@@ -59,7 +59,7 @@ def generate_control_card():
                     html.Label("Focused Attribute"),
                     dcc.Dropdown(
                         # TODO: Rename this id?
-                        id="select-map-mode",
+                        id="select-focused-attribute",
                         options=focused_attributes,
                         value=focused_attributes[0],
                         clearable=False
@@ -67,7 +67,7 @@ def generate_control_card():
                     html.Label("Aggregate function:", style={"margin-top": "5px"}),
                     dcc.Dropdown(
                         # TODO: Rename this id?
-                        id="heatmap-aggregate-dropdown",
+                        id="aggregation-dropdown",
                         options=[{"label": "Mean", "value": 'mean'}, {"label": "Min.", "value": 'min'}, {"label": "Max.", "value": 'max'}],
                         value='mean',
                         clearable=False
