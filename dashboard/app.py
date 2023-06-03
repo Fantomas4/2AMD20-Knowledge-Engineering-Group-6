@@ -45,7 +45,7 @@ def update_choropleth(target_df, focused_attribute, selected_establishment_sizes
     return fig
 
 
-def update_pcp(target_df, selected_data, focused_attribute, selected_dimensions):
+def update_pcp(target_df, focused_attribute, selected_dimensions, selected_data=None, selected_establishment_sizes=None):
     """
     Used to update the PCP figure
     :param target_df: the dataframe containing the data that will be used by PCP
@@ -55,17 +55,22 @@ def update_pcp(target_df, selected_data, focused_attribute, selected_dimensions)
     :param selected_dimensions: the selected attributes that should be put on PCP's axes
     :return: a figure object representing the generated PCP figure
     """
+    # Filter target_df based on the selected establishment sizes
+    if selected_establishment_sizes is None:
+        selected_establishment_sizes = []
+    target_df = target_df[target_df['Business size'].isin(selected_establishment_sizes)]
+
     if selected_data:
         # If a data selection is provided, filter target_df accordingly
-        neighbourhoods = [x['location'] for x in selected_data['points']]
-        target_df = target_df[target_df['neighbourhood'].isin(
-            neighbourhoods)]
+        states = [x['location'] for x in selected_data['points']]
+        target_df = target_df[target_df['State code'].isin(states)]
 
-    fig = px.parallel_coordinates(data_frame=target_df, color=attr_mapping_dict[focused_attribute],
+    fig = px.parallel_coordinates(data_frame=target_df,
+                                  color=focused_attribute,
                                   dimensions=selected_dimensions,
                                   color_continuous_scale=px.colors.sequential.Blackbody,
                                   color_continuous_midpoint=2,
-                                  range_color=[target_df[attr_mapping_dict[focused_attribute]].min(), target_df[attr_mapping_dict[focused_attribute]].max()])
+                                  range_color=[target_df[focused_attribute].min(), target_df[focused_attribute].max()])
     fig.update_layout(margin=dict(t=45, l=48, r=5, b=40))
 
     return fig
@@ -138,12 +143,25 @@ if __name__ == '__main__':
     # Initialize choropleth figure
     choropleth_fig = update_choropleth(cbp_df, default_focused_attr)
 
-    # # Initialize PCP figure
-    # initial_pcp_dimensions = ['availability 365', 'minimum nights', 'service fee', 'number of reviews', 'Construction year', 'review rate number', 'price']
-    # pcp_fig = update_pcp(airbnb_df, None, default_focused_attr, initial_pcp_dimensions)
-
     # Initialize histogram figure
     histogram_fig = update_histogram(cbp_df, default_focused_attr)
+
+    # # Initialize PCP figure
+    initial_pcp_dimensions = ['#Establishments',
+                              'Average annual payroll',
+                              'Average first-quarter payroll',
+                              'Average #employees',
+                              'Men to women degree holders ratio',
+                              '#(Mid)Senior degree holders',
+                              'Degree holders to establishments ratio',
+                              'Rate establishments born',
+                              'Rate establishments exited',
+                              'Rate born - exited',
+                              'Min rank',
+                              'Average rank',
+                              'Max rank']
+    pcp_fig = update_pcp(cbp_df, default_focused_attr, initial_pcp_dimensions)
+
 
     # # Initialize heatmap figure
     # heatmap_fig = update_heatmap(airbnb_df, None, default_focused_attr)
@@ -169,17 +187,17 @@ if __name__ == '__main__':
                         children=[html.Div(id="loading-output-choropleth"),
                                   dcc.Graph(id="choropleth-mapbox", figure=choropleth_fig)]
                     ),
-                    # html.Div(className='twelve columns', children=[
-                    #     html.H5('Ordered Attribute Correlations'),
-                    #     html.Div(id="pcp", children=[
-                    #         dcc.Loading(
-                    #             id="loading-2",
-                    #             type="default",
-                    #             children=[html.Div(id="loading-output-pcp"),
-                    #                       dcc.Graph(id="pcp-graph", figure=pcp_fig)]
-                    #         )
-                    #     ])
-                    # ])
+                    html.Div(className='twelve columns', children=[
+                        html.H5('Ordered Attribute Correlations'),
+                        html.Div(id="pcp", children=[
+                            dcc.Loading(
+                                id="loading-2",
+                                type="default",
+                                children=[html.Div(id="loading-output-pcp"),
+                                          dcc.Graph(id="pcp-graph", figure=pcp_fig)]
+                            )
+                        ])
+                    ])
                 ]
             ),
             # Middle column / histogram and heatmap
@@ -313,15 +331,31 @@ if __name__ == '__main__':
         return update_histogram(cbp_df, focused_attribute, selected_data=selected_data, selected_establishment_sizes=selected_establishment_sizes), None
 
 
-    # @app.callback(
-    #     Output("pcp-graph", "figure"),
-    #     Output("loading-output-pcp", "children"),
-    #     Input("select-focused-attribute", "value"),
-    #     Input('choropleth-mapbox', 'selectedData'),
-    #     Input('pcp-checklist', 'value'))
-    # def update_pcp_view(focused_attribute, selected_data, checklist_values):
-    #     return update_pcp(airbnb_df, selected_data, focused_attribute, checklist_values), None
-    #
+    @app.callback(
+        Output("pcp-graph", "figure"),
+        Output("loading-output-pcp", "children"),
+        Input("select-focused-attribute", "value"),
+        Input("establishment-size-checklist", "value"),
+        Input('choropleth-mapbox', 'selectedData'),
+        Input('pcp-checklist', 'value'))
+    def update_pcp_view(focused_attribute, selected_establishment_sizes, selected_data, checklist_values):
+        print(selected_data)
+        # TODO: Debug only!
+        checklist_values = ['#Establishments',
+                                  'Average annual payroll',
+                                  'Average first-quarter payroll',
+                                  'Average #employees',
+                                  'Men to women degree holders ratio',
+                                  '#(Mid)Senior degree holders',
+                                  'Degree holders to establishments ratio',
+                                  'Rate establishments born',
+                                  'Rate establishments exited',
+                                  'Rate born - exited',
+                                  'Min rank',
+                                  'Average rank',
+                                  'Max rank']
+        return update_pcp(cbp_df, focused_attribute, checklist_values, selected_data=selected_data, selected_establishment_sizes=selected_establishment_sizes), None
+
 
     # @app.callback(
     #     Output("distr", "figure"),
