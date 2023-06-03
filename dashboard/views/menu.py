@@ -1,6 +1,5 @@
 from dash import dcc, html
 
-
 focused_attributes = ["#Establishments",
                       "Average annual payroll",
                       "Average first-quarter payroll",
@@ -15,6 +14,23 @@ focused_attributes = ["#Establishments",
                       "Average rank",
                       "Max rank"]
 
+default_pcp_selections = [
+                          # '#Establishments',
+                          'Average annual payroll',
+                          # 'Average first-quarter payroll',
+                          'Average #employees',
+                          'Men to women degree holders ratio',
+                          '#(Mid)Senior degree holders',
+                          'Degree holders to establishments ratio',
+                          # 'Rate establishments born',
+                          # 'Rate establishments exited',
+                          'Rate born - exited',
+                          # 'Min rank',
+                          'Average rank'
+                          # 'Max rank'
+                          ]
+
+
 def generate_description_card():
     """
     
@@ -25,25 +41,25 @@ def generate_description_card():
         html.Details([
             html.Summary('Help'),
             html.Div(id="description-card",
-            children=[
-                html.Div(
-                    id="intro",
-                    children=[
-                        # TODO: Change description
-                        "This dashboard offers an overview of data related το Airbnb listings in New York City, US.",
-                        html.Br(), html.Br(),
-                        "You may start by choosing the attribute of interest (focused attribute). "
-                        "You are also given control over the categorical attributes represented in the heatmap's axis.",
-                        html.Br(), html.Br(),
-                        "Additionally, the \"Parallel Coordinates Plot\" (PCP) view is interactive and allows for the re-arrangement"
-                        " of its coordinates axes to further investigate possible correlations.",
-                        html.Br(), html.Br(),
-                        "Note that using the \"lasso\" or \"box selection\" tool embedded in the choropleth view to select "
-                        "specific areas of the map will also affect the data presented in the rest of the views (interaction)."]
-                ),
-            ]),
+                     children=[
+                         html.Div(
+                             id="intro",
+                             children=[
+                                 # TODO: Change description
+                                 "This dashboard offers an overview of data related το Airbnb listings in New York City, US.",
+                                 html.Br(), html.Br(),
+                                 "You may start by choosing the attribute of interest (focused attribute). "
+                                 "You are also given control over the categorical attributes represented in the heatmap's axis.",
+                                 html.Br(), html.Br(),
+                                 "Additionally, the \"Parallel Coordinates Plot\" (PCP) view is interactive and allows for the re-arrangement"
+                                 " of its coordinates axes to further investigate possible correlations.",
+                                 html.Br(), html.Br(),
+                                 "Note that using the \"lasso\" or \"box selection\" tool embedded in the choropleth view to select "
+                                 "specific areas of the map will also affect the data presented in the rest of the views (interaction)."]
+                         ),
+                     ]),
         ])
-    ]) 
+    ])
 
 
 def generate_control_card():
@@ -68,7 +84,8 @@ def generate_control_card():
                     dcc.Dropdown(
                         # TODO: Rename this id?
                         id="aggregation-dropdown",
-                        options=[{"label": "Mean", "value": 'mean'}, {"label": "Min.", "value": 'min'}, {"label": "Max.", "value": 'max'}],
+                        options=[{"label": "Mean", "value": 'mean'}, {"label": "Min.", "value": 'min'},
+                                 {"label": "Max.", "value": 'max'}],
                         value='mean',
                         clearable=False
                     ),
@@ -113,15 +130,8 @@ def generate_control_card():
                     html.Label("PCP Attributes"),
                     dcc.Checklist(
                         id="pcp-checklist",
-                        options=[{'label': 'Availability 365', 'value': 'availability 365'},
-                                 {'label': '#Minimum Nights', 'value': 'minimum nights'},
-                                 {'label': 'Service Fee', 'value': 'service fee'},
-                                 {'label': '#Reviews', 'value': 'number of reviews'},
-                                 {'label': 'Construction Year', 'value': 'Construction year'},
-                                 {'label': 'Review Rating', 'value': 'review rate number'},
-                                 {'label': 'Price', 'value': 'price'},
-                        ],
-                        value=['availability 365', 'minimum nights', 'service fee', 'number of reviews', 'Construction year', 'review rate number', 'price']
+                        options=focused_attributes,
+                        value=default_pcp_selections
                     )
                 ], style={"margin-top": "15px"}
             )

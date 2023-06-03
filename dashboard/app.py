@@ -6,7 +6,7 @@ from dash import html, dcc
 
 from config import focused_attr_dict
 from main import app
-from views.menu import make_menu_layout
+from views.menu import make_menu_layout, default_pcp_selections
 from dash.dependencies import Input, Output, State
 
 
@@ -45,7 +45,8 @@ def update_choropleth(target_df, focused_attribute, selected_establishment_sizes
     return fig
 
 
-def update_pcp(target_df, focused_attribute, selected_dimensions, selected_data=None, selected_establishment_sizes=None):
+def update_pcp(target_df, focused_attribute, selected_dimensions, selected_data=None,
+               selected_establishment_sizes=None):
     """
     Used to update the PCP figure
     :param target_df: the dataframe containing the data that will be used by PCP
@@ -97,7 +98,7 @@ def update_histogram(target_df, focused_attribute, selected_data=None, selected_
         y=1.02,
         xanchor="left",
     ))
-    fig.update_layout(legend_title_text='Variable:', margin=dict(r=10,b=4,t=4,l=3))
+    fig.update_layout(legend_title_text='Variable:', margin=dict(r=10, b=4, t=4, l=3))
 
     return fig
 
@@ -146,22 +147,8 @@ if __name__ == '__main__':
     # Initialize histogram figure
     histogram_fig = update_histogram(cbp_df, default_focused_attr)
 
-    # # Initialize PCP figure
-    initial_pcp_dimensions = ['#Establishments',
-                              'Average annual payroll',
-                              'Average first-quarter payroll',
-                              'Average #employees',
-                              'Men to women degree holders ratio',
-                              '#(Mid)Senior degree holders',
-                              'Degree holders to establishments ratio',
-                              'Rate establishments born',
-                              'Rate establishments exited',
-                              'Rate born - exited',
-                              'Min rank',
-                              'Average rank',
-                              'Max rank']
-    pcp_fig = update_pcp(cbp_df, default_focused_attr, initial_pcp_dimensions)
-
+    # Initialize PCP figure
+    pcp_fig = update_pcp(cbp_df, default_focused_attr, default_pcp_selections)
 
     # # Initialize heatmap figure
     # heatmap_fig = update_heatmap(airbnb_df, None, default_focused_attr)
@@ -178,7 +165,7 @@ if __name__ == '__main__':
             # Middle column / map and PCP
             html.Div(
                 id="middle-column",
-                className="six columns",
+                className="seven columns",
                 children=[
                     html.H5('Map overview'),
                     dcc.Loading(
@@ -200,10 +187,10 @@ if __name__ == '__main__':
                     ])
                 ]
             ),
-            # Middle column / histogram and heatmap
+            # Right column / histogram and heatmap
             html.Div(
                 id="right-column",
-                className="four columns",
+                className="three columns",
                 style={"padding": 0,
                        "background-color": 'rgba(0, 0, 255, 0.0)'},
                 children=[
@@ -224,6 +211,7 @@ if __name__ == '__main__':
             ),
         ]
     )
+
 
     # @app.callback(
     #     Output("heatmap-x-axis-dropdown", "options"),
@@ -305,8 +293,6 @@ if __name__ == '__main__':
     #         return cur_x_value, cur_y_value
     #
 
-
-
     @app.callback(
         Output("choropleth-mapbox", "figure"),
         Output("attribute-label", "children"),
@@ -315,10 +301,10 @@ if __name__ == '__main__':
         Input("aggregation-dropdown", "value"),
         Input("establishment-size-checklist", "value"))
     def update_choropleth_view(focused_attribute, aggregate_func, selected_establishment_sizes):
-        return update_choropleth(cbp_df, focused_attribute, selected_establishment_sizes=selected_establishment_sizes, aggregation=aggregate_func),\
+        return update_choropleth(cbp_df, focused_attribute, selected_establishment_sizes=selected_establishment_sizes,
+                                 aggregation=aggregate_func), \
                "Distribution of {}".format(focused_attribute), \
                None
-
 
 
     @app.callback(
@@ -328,7 +314,8 @@ if __name__ == '__main__':
         Input("select-focused-attribute", "value"),
         Input("establishment-size-checklist", "value"))
     def update_histogram_view(selected_data, focused_attribute, selected_establishment_sizes):
-        return update_histogram(cbp_df, focused_attribute, selected_data=selected_data, selected_establishment_sizes=selected_establishment_sizes), None
+        return update_histogram(cbp_df, focused_attribute, selected_data=selected_data,
+                                selected_establishment_sizes=selected_establishment_sizes), None
 
 
     @app.callback(
@@ -339,22 +326,8 @@ if __name__ == '__main__':
         Input('choropleth-mapbox', 'selectedData'),
         Input('pcp-checklist', 'value'))
     def update_pcp_view(focused_attribute, selected_establishment_sizes, selected_data, checklist_values):
-        print(selected_data)
-        # TODO: Debug only!
-        checklist_values = ['#Establishments',
-                                  'Average annual payroll',
-                                  'Average first-quarter payroll',
-                                  'Average #employees',
-                                  'Men to women degree holders ratio',
-                                  '#(Mid)Senior degree holders',
-                                  'Degree holders to establishments ratio',
-                                  'Rate establishments born',
-                                  'Rate establishments exited',
-                                  'Rate born - exited',
-                                  'Min rank',
-                                  'Average rank',
-                                  'Max rank']
-        return update_pcp(cbp_df, focused_attribute, checklist_values, selected_data=selected_data, selected_establishment_sizes=selected_establishment_sizes), None
+        return update_pcp(cbp_df, focused_attribute, checklist_values, selected_data=selected_data,
+                          selected_establishment_sizes=selected_establishment_sizes), None
 
 
     # @app.callback(
@@ -372,7 +345,6 @@ if __name__ == '__main__':
     #     # TODO: Also include heatmap update here!
     #     # return update_histogram(cbp_df, selected_data, focused_attribute), update_heatmap(cbp_df, selected_data, focused_attribute, x_choice, y_choice, aggregate_value), None, None
     #     return update_histogram(cbp_df, selected_data, focused_attribute), None
-
 
     # @app.callback(
     #     Output("heatmap-val", "children"),
