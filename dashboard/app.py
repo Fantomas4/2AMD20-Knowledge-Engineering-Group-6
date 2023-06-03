@@ -45,30 +45,30 @@ def update_choropleth(target_df, focused_attribute, selected_establishment_sizes
     return fig
 
 
-# def update_pcp(target_df, selected_data, focused_attribute, selected_dimensions):
-#     """
-#     Used to update the PCP figure
-#     :param target_df: the dataframe containing the data that will be used by PCP
-#     :param selected_data: contains the data points selected using the "lasso" or "box selection" tool of the choropleth
-#     figure; None if no such selection is made
-#     :param focused_attribute: the attribute of target_df we want to visualize on PCP
-#     :param selected_dimensions: the selected attributes that should be put on PCP's axes
-#     :return: a figure object representing the generated PCP figure
-#     """
-#     if selected_data:
-#         # If a data selection is provided, filter target_df accordingly
-#         neighbourhoods = [x['location'] for x in selected_data['points']]
-#         target_df = target_df[target_df['neighbourhood'].isin(
-#             neighbourhoods)]
-#
-#     fig = px.parallel_coordinates(data_frame=target_df, color=attr_mapping_dict[focused_attribute],
-#                                   dimensions=selected_dimensions,
-#                                   color_continuous_scale=px.colors.sequential.Blackbody,
-#                                   color_continuous_midpoint=2,
-#                                   range_color=[target_df[attr_mapping_dict[focused_attribute]].min(), target_df[attr_mapping_dict[focused_attribute]].max()])
-#     fig.update_layout(margin=dict(t=45, l=48, r=5, b=40))
-#
-#     return fig
+def update_pcp(target_df, selected_data, focused_attribute, selected_dimensions):
+    """
+    Used to update the PCP figure
+    :param target_df: the dataframe containing the data that will be used by PCP
+    :param selected_data: contains the data points selected using the "lasso" or "box selection" tool of the choropleth
+    figure; None if no such selection is made
+    :param focused_attribute: the attribute of target_df we want to visualize on PCP
+    :param selected_dimensions: the selected attributes that should be put on PCP's axes
+    :return: a figure object representing the generated PCP figure
+    """
+    if selected_data:
+        # If a data selection is provided, filter target_df accordingly
+        neighbourhoods = [x['location'] for x in selected_data['points']]
+        target_df = target_df[target_df['neighbourhood'].isin(
+            neighbourhoods)]
+
+    fig = px.parallel_coordinates(data_frame=target_df, color=attr_mapping_dict[focused_attribute],
+                                  dimensions=selected_dimensions,
+                                  color_continuous_scale=px.colors.sequential.Blackbody,
+                                  color_continuous_midpoint=2,
+                                  range_color=[target_df[attr_mapping_dict[focused_attribute]].min(), target_df[attr_mapping_dict[focused_attribute]].max()])
+    fig.update_layout(margin=dict(t=45, l=48, r=5, b=40))
+
+    return fig
 
 
 def update_histogram(target_df, focused_attribute, selected_data=None, selected_establishment_sizes=None):
@@ -286,14 +286,7 @@ if __name__ == '__main__':
     #     else:
     #         return cur_x_value, cur_y_value
     #
-    # @app.callback(
-    #     Output("pcp-graph", "figure"),
-    #     Output("loading-output-pcp", "children"),
-    #     Input("select-focused-attribute", "value"),
-    #     Input('choropleth-mapbox', 'selectedData'),
-    #     Input('pcp-checklist', 'value'))
-    # def choropleth_area_selection_changed(focused_attribute, selected_data, checklist_values):
-    #     return update_pcp(airbnb_df, selected_data, focused_attribute, checklist_values), None
+
 
 
     @app.callback(
@@ -320,8 +313,15 @@ if __name__ == '__main__':
         return update_histogram(cbp_df, focused_attribute, selected_data=selected_data, selected_establishment_sizes=selected_establishment_sizes), None
 
 
-
-
+    # @app.callback(
+    #     Output("pcp-graph", "figure"),
+    #     Output("loading-output-pcp", "children"),
+    #     Input("select-focused-attribute", "value"),
+    #     Input('choropleth-mapbox', 'selectedData'),
+    #     Input('pcp-checklist', 'value'))
+    # def update_pcp_view(focused_attribute, selected_data, checklist_values):
+    #     return update_pcp(airbnb_df, selected_data, focused_attribute, checklist_values), None
+    #
 
     # @app.callback(
     #     Output("distr", "figure"),
