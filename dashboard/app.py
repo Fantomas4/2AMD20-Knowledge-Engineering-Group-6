@@ -178,7 +178,7 @@ def update_heatmap(target_df, focused_attribute, x_choice=cat_attr_list[0], y_ch
 if __name__ == '__main__':
     # Read the data from the csv file
     cbp_df = pd.read_csv(
-        "../datasets/CBP_preprocessed.csv", low_memory=False)
+        "../datasets/generated/final_preprocessed.csv", low_memory=False)
 
     # Set the default focused attribute
     default_focused_attr = focused_attributes[0]
