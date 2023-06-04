@@ -1,34 +1,6 @@
 from dash import dcc, html
 
-focused_attributes = ["#Establishments",
-                      "Average annual payroll",
-                      "Average first-quarter payroll",
-                      "Average #employees",
-                      "Men to women degree holders ratio",
-                      "#(Mid)Senior degree holders",
-                      "Degree holders to establishments ratio",
-                      "Rate establishments born",
-                      "Rate establishments exited",
-                      "Rate born - exited",
-                      "Min rank",
-                      "Average rank",
-                      "Max rank"]
-
-default_pcp_selections = [
-                          # '#Establishments',
-                          'Average annual payroll',
-                          # 'Average first-quarter payroll',
-                          'Average #employees',
-                          'Men to women degree holders ratio',
-                          '#(Mid)Senior degree holders',
-                          'Degree holders to establishments ratio',
-                          # 'Rate establishments born',
-                          # 'Rate establishments exited',
-                          'Rate born - exited',
-                          # 'Min rank',
-                          'Average rank'
-                          # 'Max rank'
-                          ]
+from dashboard.config import focused_attributes, default_pcp_selections, cat_attr_list
 
 
 def generate_description_card():
@@ -45,7 +17,7 @@ def generate_description_card():
                          html.Div(
                              id="intro",
                              children=[
-                                 # TODO: Change description
+                                 #TODO: Change description
                                  "This dashboard offers an overview of data related το Airbnb listings in New York City, US.",
                                  html.Br(), html.Br(),
                                  "You may start by choosing the attribute of interest (focused attribute). "
@@ -110,19 +82,19 @@ def generate_control_card():
                 children=[
                     html.Label("Heatmap Options", style={"margin-top": "35px"}),
                     html.Label("X-axis attribute:", style={"margin-top": "5px"}),
-                    # dcc.Dropdown(
-                    #     id="heatmap-x-axis-dropdown",
-                    #     options=[{"label": k, "value": v} for k, v in cat_attr_dict.items()],
-                    #     value=list(cat_attr_dict.values())[0],
-                    #     clearable=False
-                    # ),
+                    dcc.Dropdown(
+                        id="heatmap-x-axis-dropdown",
+                        options=cat_attr_list,
+                        value=cat_attr_list[0],
+                        clearable=False
+                    ),
                     html.Label("Y-axis attribute:", style={"margin-top": "5px"}),
-                    # dcc.Dropdown(
-                    #     id="heatmap-y-axis-dropdown",
-                    #     options=[{"label": k, "value": v} for k, v in cat_attr_dict.items() if k != list(cat_attr_dict.keys())[0]],
-                    #     value=list(cat_attr_dict.values())[1],
-                    #     clearable=False
-                    # )
+                    dcc.Dropdown(
+                        id="heatmap-y-axis-dropdown",
+                        options=cat_attr_list,
+                        value=cat_attr_list[1],
+                        clearable=False
+                    )
                 ], style={"margin-top": "15px"}
             ),
             html.Div(

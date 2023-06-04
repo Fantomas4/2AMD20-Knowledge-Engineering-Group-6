@@ -4,7 +4,7 @@ import pandas as pd
 import plotly.express as px
 from dash import html, dcc
 
-from config import focused_attr_dict
+from config import cat_attr_list, focused_attributes
 from main import app
 from views.menu import make_menu_layout, default_pcp_selections
 from dash.dependencies import Input, Output, State
@@ -87,7 +87,6 @@ def update_histogram(target_df, focused_attribute, selected_data=None, selected_
         # If a data selection is provided, filter target_df accordingly
         states = [x['location'] for x in selected_data['points']]
         target_df = target_df[target_df['State code'].isin(states)]
-        print(selected_data)
 
     fig = px.histogram(target_df[focused_attribute])
     fig.update_xaxes(title="Value")
@@ -103,31 +102,66 @@ def update_histogram(target_df, focused_attribute, selected_data=None, selected_
     return fig
 
 
-# def update_heatmap(target_df, selected_data, focused_attribute, x_choice="review rate number", y_choice="room type", aggregate_value='avg'):
-#     """
-#     Used to update the heatmap figure
-#     :param target_df: the dataframe containing the data that will be used by the choropleth figure
-#     :param selected_data: contains the data points selected using the "lasso" or "box selection" tool of the choropleth
-#     figure; None if no such selection is made
-#     :param focused_attribute: the (quantitative) attribute of target_df we want to visualize on the heatmap using the colourmap
-#     :param x_choice: the selected (categorical) attribute that will be visualized on the heatmap's X axis
-#     :param y_choice: the selected (categorical) attribute that will be visualized on the heatmap's Y axis
-#     :param aggregate_value: the selected aggregate function name that will be applied to the heatmap's data
-#     :return:
-#     """
-#     # If a data selection is provided, filter target_df accordingly
-#     if selected_data:
-#         neighbourhoods = [x['location'] for x in selected_data['points']]
-#         target_df = airbnb_df[airbnb_df['neighbourhood'].isin(neighbourhoods)]
-#
-#     heatmap_fig = px.density_heatmap(
-#         data_frame=target_df, x=target_df[x_choice], y=target_df[y_choice],
-#         z=target_df[attr_mapping_dict[focused_attribute]], histfunc=aggregate_value)
-#     heatmap_fig.update_xaxes(dtick=1, fixedrange=True)
-#     heatmap_fig.update_yaxes(fixedrange=True)
-#     heatmap_fig.update_layout(margin=dict(r=2,b=4,t=10,l=3))
-#
-#     return heatmap_fig
+def update_heatmap(target_df, focused_attribute, x_choice=cat_attr_list[0], y_choice=cat_attr_list[1],
+                   aggregate_value='mean', selected_data=None, selected_establishment_sizes=None):
+    """
+    Used to update the heatmap figure
+    :param target_df: the dataframe containing the data that will be used by the choropleth figure
+    :param selected_data: contains the data points selected using the "lasso" or "box selection" tool of the choropleth
+    figure; None if no such selection is made
+    :param focused_attribute: the (quantitative) attribute of target_df we want to visualize on the heatmap using the colourmap
+    :param x_choice: the selected (categorical) attribute that will be visualized on the heatmap's X axis
+    :param y_choice: the selected (categorical) attribute that will be visualized on the heatmap's Y axis
+    :param aggregate_value: the selected aggregate function name that will be applied to the heatmap's data
+    :return:
+    """
+    # Filter target_df based on the selected establishment sizes
+    if selected_establishment_sizes is None:
+        selected_establishment_sizes = []
+    target_df = target_df[target_df['Business size'].isin(selected_establishment_sizes)]
+
+    # Convert aggregate_value to the appropriate format for the "histfunc" parameter of "density_heatmap()"
+    if aggregate_value == "mean":
+        aggregate_value = "avg"
+
+    # If a data selection is provided, filter target_df accordingly
+    if selected_data:
+        states = [x['location'] for x in selected_data['points']]
+        target_df = cbp_df[cbp_df['State code'].isin(states)]
+
+    # If target_df is empty (due to filtering), create a dummy target_df that can be processed by density_heatmap()
+    if target_df.empty:
+        # column names are same as in original target_df
+        target_df = pd.DataFrame({"#Establishments": [0],
+                                  "Average annual payroll": [0],
+                                  "Average first-quarter payroll": [0],
+                                  "Average #employees": [0],
+                                  "Men to women degree holders ratio": [0],
+                                  "#(Mid)Senior degree holders": [0],
+                                  "Degree holders to establishments ratio": [0],
+                                  "Rate establishments born": [0],
+                                  "Rate establishments exited": [0],
+                                  "Rate born - exited": [0],
+                                  "Min rank": [0],
+                                  "Average rank": [0],
+                                  "Max rank": [0],
+                                  'Business size': [0],
+                                  'Region': [0],
+                                  '2nd Most popular degree field': [0],
+                                  'State with top universities': [0]})
+
+    heatmap_fig = px.density_heatmap(
+        data_frame=target_df,
+        x=target_df[x_choice],
+        y=target_df[y_choice],
+        z=target_df[focused_attribute],
+        histfunc=aggregate_value
+    )
+    heatmap_fig.update_xaxes(dtick=1, fixedrange=True)
+    heatmap_fig.update_yaxes(fixedrange=True)
+    heatmap_fig.update_layout(margin=dict(r=2, b=4, t=10, l=3))
+
+    return heatmap_fig
 
 
 if __name__ == '__main__':
@@ -136,10 +170,7 @@ if __name__ == '__main__':
         "../datasets/CBP_preprocessed.csv", low_memory=False)
 
     # Set the default focused attribute
-    # TODO: Update this
-    # default_focused_attr = list(focused_attr_dict.values())[0]
-
-    default_focused_attr = "#Establishments"
+    default_focused_attr = focused_attributes[0]
 
     # Initialize choropleth figure
     choropleth_fig = update_choropleth(cbp_df, default_focused_attr)
@@ -151,7 +182,7 @@ if __name__ == '__main__':
     pcp_fig = update_pcp(cbp_df, default_focused_attr, default_pcp_selections)
 
     # # Initialize heatmap figure
-    # heatmap_fig = update_heatmap(airbnb_df, None, default_focused_attr)
+    heatmap_fig = update_heatmap(cbp_df, default_focused_attr)
 
     app.layout = html.Div(
         id="app-container",
@@ -202,96 +233,76 @@ if __name__ == '__main__':
                                   dcc.Graph(id='histogram', figure=histogram_fig)]
                     ),
                     html.H5("Categorical Attribute Correlations", id='heatmap-val'),
-                    # dcc.Loading(
-                    #     id="loading-4",
-                    #     type="default",
-                    #     children=[html.Div(id="loading-output-heatmap"),
-                    #               dcc.Graph(id='heatmap', figure=heatmap_fig)])
+                    dcc.Loading(
+                        id="loading-4",
+                        type="default",
+                        children=[html.Div(id="loading-output-heatmap"),
+                                  dcc.Graph(id='heatmap', figure=heatmap_fig)])
                 ]
             ),
         ]
     )
 
 
-    # @app.callback(
-    #     Output("heatmap-x-axis-dropdown", "options"),
-    #     Input('heatmap-y-axis-dropdown', 'value'),
-    #     Input("select-focused-attribute", "value"))
-    # def set_heatmap_x_dropdown_options(y_choice, focused_attribute):
-    #     """
-    #     Used for the application callback that applies a custom rule to determine which dropdown options should be made
-    #     available to the user. The custom rule is that since both the "X axis" dropdown and the "Y axis" dropdown offer
-    #     the same attribute options by default, if an attribute is selected in either of these dropdowns, then it should
-    #     be removed from the other. Additionally, if the "focused attribute" is "rating", then the "review rate
-    #     number" attribute is removed from both dropdowns' options, since combining average rating and review rate number
-    #     in the heatmap does not make sense semantically.
-    #     :param y_choice: the value currently selected in the "Y axis" dropdown
-    #     :param focused_attribute: the value of the selected focused attribute
-    #     :return: the updated list of dropdown options
-    #     """
-    #
-    #     dropdown_options = []
-    #     for k, v in cat_attr_dict.items():
-    #         if v == "review rate number" and focused_attribute == "rating":
-    #             continue
-    #
-    #         if v != y_choice:
-    #             dropdown_options.append({"label": k, "value": v})
-    #
-    #     return dropdown_options
-    #
-    # @app.callback(
-    #     Output("heatmap-y-axis-dropdown", "options"),
-    #     Input('heatmap-x-axis-dropdown', 'value'),
-    #     Input("select-focused-attribute", "value"))
-    # def set_heatmap_y_dropdown_options(x_choice, focused_attribute):
-    #     """
-    #     Used for the application callback that applies a custom rule to determine which dropdown options should be made
-    #     available to the user. The custom rule is that since both the "X axis" dropdown and the "Y axis" dropdown offer
-    #     the same attribute options by default, if an attribute is selected in either of these dropdowns, then it should
-    #     be removed from the other. Additionally, if the "focused attribute" is "rating", then the "review rate
-    #     number" attribute is removed from both dropdowns' options, since combining average rating and review rate number
-    #     in the heatmap does not make sense semantically.
-    #     :param x_choice: the value currently selected in the "X axis" dropdown
-    #     :param focused_attribute: the value of the selected focused attribute
-    #     :return: the updated list of dropdown options
-    #     """
-    #
-    #     dropdown_options = []
-    #     for k, v in cat_attr_dict.items():
-    #         if v == "review rate number" and focused_attribute == "rating":
-    #             continue
-    #
-    #         if v != x_choice:
-    #             dropdown_options.append({"label": k, "value": v})
-    #
-    #     return dropdown_options
-    #
-    # @app.callback(
-    #     Output("heatmap-x-axis-dropdown", "value"),
-    #     Output("heatmap-y-axis-dropdown", "value"),
-    #     State("heatmap-x-axis-dropdown", "value"),
-    #     State("heatmap-y-axis-dropdown", "value"),
-    #     Input("select-focused-attribute", "value"))
-    # def set_heatmap_dropdown_values(cur_x_value, cur_y_value, focused_attribute):
-    #     """
-    #     Used for the application callback that applies a custom rule to set the heatmap "X axis" and "Y axis" dropdown
-    #     choices to specific values under certain conditions. Specifically, the custom rule is that if the "review rate
-    #     number" is selected in either of the dropdowns and the "focused attribute" changes to "rating", the "X axis" and
-    #     "Y axis" dropdowns values are set to "Room Type" and "District" respectively. This is done because the combination
-    #     of "rating" (focused attribute) and "review rate number" (dropdowns) does not make sense semantically.
-    #     :param cur_x_value: the value currently set to the "X axis" dropdown
-    #     :param cur_y_value: the value currently set to the "Y axis" dropdown
-    #     :param focused_attribute: the value of the selected focused attribute
-    #     :return: the updated values for the "X axis" and "Y axis" dropdowns
-    #     """
-    #
-    #     # Prevent "review rate number" being both the focused attribute and heatmap's x or y axis attribute
-    #     if focused_attribute == "rating" and (cur_x_value == "review rate number" or cur_y_value == "review rate number"):
-    #         return cat_attr_dict["Room Type"], cat_attr_dict["District"]
-    #     else:
-    #         return cur_x_value, cur_y_value
-    #
+    @app.callback(
+        Output("heatmap-x-axis-dropdown", "options"),
+        Input('heatmap-y-axis-dropdown', 'value'))
+    def set_heatmap_x_dropdown_options(y_choice):
+        """
+        Used for the application callback that applies a custom rule to determine which dropdown options should be made
+        available to the user. The custom rule is that since both the "X axis" dropdown and the "Y axis" dropdown offer
+        the same attribute options by default, if an attribute is selected in either of these dropdowns, then it should
+        be removed from the other. Additionally, if the "focused attribute" is "rating", then the "review rate
+        number" attribute is removed from both dropdowns' options, since combining average rating and review rate number
+        in the heatmap does not make sense semantically.
+        :param y_choice: the value currently selected in the "Y axis" dropdown
+        :param focused_attribute: the value of the selected focused attribute
+        :return: the updated list of dropdown options
+        """
+
+        dropdown_options = []
+        # for k, v in cat_attr_dict.items():
+        #     if v == "review rate number" and focused_attribute == "rating":
+        #         continue
+        #
+        #     if v != y_choice:
+        #         dropdown_options.append({"label": k, "value": v})
+        for option in cat_attr_list:
+            if option != y_choice:
+                dropdown_options.append(option)
+
+        return dropdown_options
+
+
+    @app.callback(
+        Output("heatmap-y-axis-dropdown", "options"),
+        Input('heatmap-x-axis-dropdown', 'value'))
+    def set_heatmap_y_dropdown_options(x_choice, ):
+        """
+        Used for the application callback that applies a custom rule to determine which dropdown options should be made
+        available to the user. The custom rule is that since both the "X axis" dropdown and the "Y axis" dropdown offer
+        the same attribute options by default, if an attribute is selected in either of these dropdowns, then it should
+        be removed from the other. Additionally, if the "focused attribute" is "rating", then the "review rate
+        number" attribute is removed from both dropdowns' options, since combining average rating and review rate number
+        in the heatmap does not make sense semantically.
+        :param x_choice: the value currently selected in the "X axis" dropdown
+        :param focused_attribute: the value of the selected focused attribute
+        :return: the updated list of dropdown options
+        """
+
+        dropdown_options = []
+        # for k, v in cat_attr_dict.items():
+        #     if v == "review rate number" and focused_attribute == "rating":
+        #         continue
+        #
+        #     if v != x_choice:
+        #         dropdown_options.append({"label": k, "value": v})
+        for option in cat_attr_list:
+            if option != x_choice:
+                dropdown_options.append(option)
+
+        return dropdown_options
+
 
     @app.callback(
         Output("choropleth-mapbox", "figure"),
@@ -330,43 +341,23 @@ if __name__ == '__main__':
                           selected_establishment_sizes=selected_establishment_sizes), None
 
 
-    # @app.callback(
-    #     Output("distr", "figure"),
-    #     # Output("heatmap", "figure"),
-    #     Output("loading-output-histogram", "children"),
-    #     # Output("loading-output-heatmap", "children"),
-    #     Input('choropleth-mapbox', 'selectedData'),
-    #     Input("select-focused-attribute", "value"),
-    #     # Input("heatmap-x-axis-dropdown", "value"),
-    #     # Input("heatmap-y-axis-dropdown", "value"),
-    #     Input("aggregation-dropdown", "value"))
-    # def choropleth_mode_selection_changed(selected_data, focused_attribute, aggregate_func):
-    # # def choropleth_mode_selection_changed(selected_data, focused_attribute, x_choice, y_choice, aggregate_value):
-    #     # TODO: Also include heatmap update here!
-    #     # return update_histogram(cbp_df, selected_data, focused_attribute), update_heatmap(cbp_df, selected_data, focused_attribute, x_choice, y_choice, aggregate_value), None, None
-    #     return update_histogram(cbp_df, selected_data, focused_attribute), None
+    @app.callback(
+        Output("heatmap", "figure"),
+        Output("loading-output-heatmap", "children"),
+        Input('choropleth-mapbox', 'selectedData'),
+        Input("select-focused-attribute", "value"),
+        Input("establishment-size-checklist", "value"),
+        Input("heatmap-x-axis-dropdown", "value"),
+        Input("heatmap-y-axis-dropdown", "value"),
+        Input("aggregation-dropdown", "value"))
+    def update_heatmap_view(selected_data, focused_attribute, selected_establishment_sizes, x_choice, y_choice,
+                            aggregate_value):
+        return update_heatmap(cbp_df,
+                              focused_attribute,
+                              x_choice=x_choice,
+                              y_choice=y_choice,
+                              aggregate_value=aggregate_value,
+                              selected_data=selected_data,
+                              selected_establishment_sizes=selected_establishment_sizes), None
 
-    # @app.callback(
-    #     Output("heatmap-val", "children"),
-    #     Input("select-focused-attribute", "value"),
-    #     Input("heatmap-x-axis-dropdown", "value"),
-    #     Input("heatmap-y-axis-dropdown", "value"),
-    #     Input("aggregation-dropdown", "value"))
-    # def update_heatmap_label(focused_attribute, x_choice, y_choice, aggregate_value):
-    #     """
-    #     Used to set the text of the heatmap idiom label
-    #     :param focused_attribute: the selected focused attribute value
-    #     :param x_choice: the "X axis" dropdown choice selected
-    #     :param y_choice: the "Y axis dropdown choice selected
-    #     :param aggregate_value: a value indicating the aggregate function selected
-    #     :return: a string representing the heatmap idiom label
-    #     """
-    #     # Determine the wording based on which the heatmap label will be composed
-    #     fa_name = [k for k, v in focused_attr_dict.items() if v == focused_attribute][0]
-    #     x_name = [k for k, v in cat_attr_dict.items() if v == x_choice][0]
-    #     y_name = [k for k, v in cat_attr_dict.items() if v == y_choice][0]
-    #     aggr_labels = {'avg': ' Average', 'min': 'Min', 'max': 'Max'}
-    #
-    #     return "{}/{} group {} of {}".format(x_name, y_name, aggr_labels[aggregate_value], fa_name)
-    #
     app.run_server(debug=True, dev_tools_ui=True)
