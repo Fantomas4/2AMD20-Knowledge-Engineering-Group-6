@@ -18,7 +18,9 @@ def generate_description_card():
                              id="intro",
                              children=[
                                  #TODO: Change description
-                                 "This dashboard offers an overview of data related το Airbnb listings in New York City, US.",
+                                 "This dashboard offers an overview of data related το the software development business market in the USA,"
+                                 "also integrating data related to the expertise and background of potential employees, such as university "
+                                 "rankings.",
                                  html.Br(), html.Br(),
                                  "You may start by choosing the attribute of interest (focused attribute). "
                                  "You are also given control over the categorical attributes represented in the heatmap's axis.",

@@ -15,8 +15,8 @@ def update_choropleth(target_df, focused_attribute, selected_establishment_sizes
     Used to update the choropleth figure
     :param target_df: the dataframe containing the data that will be used by the choropleth figure
     :param focused_attribute: the attribute of target_df we want to visualize on the choropleth
-    :param geojson_data: dataset containing the geolocation information of NYC districts
-    :param aggregate_func: defines the aggregate function selected by the user
+    :param selected_establishment_sizes: list containing the selected establishment size strings
+    :param aggregation: string that defines the aggregation we want to apply to our data within the choropleth
     :return: a figure object representing the generated choropleth figure
     """
     # Filter target_df based on the selected establishment sizes
@@ -54,6 +54,7 @@ def update_pcp(target_df, focused_attribute, selected_dimensions, selected_data=
     figure; None if no such selection is made
     :param focused_attribute: the attribute of target_df we want to visualize on PCP
     :param selected_dimensions: the selected attributes that should be put on PCP's axes
+    :param selected_establishment_sizes: list containing the selected establishment size strings
     :return: a figure object representing the generated PCP figure
     """
     # Filter target_df based on the selected establishment sizes
@@ -78,6 +79,15 @@ def update_pcp(target_df, focused_attribute, selected_dimensions, selected_data=
 
 
 def update_histogram(target_df, focused_attribute, selected_data=None, selected_establishment_sizes=None):
+    """
+    Used to update the histogram figure
+    :param target_df: the dataframe containing the data that will be used by PCP
+    :param focused_attribute: the attribute of target_df we want to visualize on PCP
+    :param selected_data: contains the data points selected using the "lasso" or "box selection" tool of the choropleth
+    figure; None if no such selection is made
+    :param selected_establishment_sizes: list containing the selected establishment size strings
+    :return: a figure object representing the generated histogram figure
+    """
     # Filter target_df based on the selected establishment sizes
     if selected_establishment_sizes is None:
         selected_establishment_sizes = []
@@ -106,13 +116,14 @@ def update_heatmap(target_df, focused_attribute, x_choice=cat_attr_list[0], y_ch
                    aggregate_value='mean', selected_data=None, selected_establishment_sizes=None):
     """
     Used to update the heatmap figure
-    :param target_df: the dataframe containing the data that will be used by the choropleth figure
-    :param selected_data: contains the data points selected using the "lasso" or "box selection" tool of the choropleth
-    figure; None if no such selection is made
+    :param target_df: the dataframe containing the data that will be used by the choropleth figure;
+     None if no such selection is made
     :param focused_attribute: the (quantitative) attribute of target_df we want to visualize on the heatmap using the colourmap
     :param x_choice: the selected (categorical) attribute that will be visualized on the heatmap's X axis
     :param y_choice: the selected (categorical) attribute that will be visualized on the heatmap's Y axis
     :param aggregate_value: the selected aggregate function name that will be applied to the heatmap's data
+    :param selected_data: contains the data points selected using the "lasso" or "box selection" tool of the choropleth
+    :param selected_establishment_sizes: list containing the selected establishment size strings
     :return:
     """
     # Filter target_df based on the selected establishment sizes
@@ -254,19 +265,12 @@ if __name__ == '__main__':
         the same attribute options by default, if an attribute is selected in either of these dropdowns, then it should
         be removed from the other. Additionally, if the "focused attribute" is "rating", then the "review rate
         number" attribute is removed from both dropdowns' options, since combining average rating and review rate number
-        in the heatmap does not make sense semantically.
+        in the heatmap does not make sense semantically
         :param y_choice: the value currently selected in the "Y axis" dropdown
-        :param focused_attribute: the value of the selected focused attribute
         :return: the updated list of dropdown options
         """
-
         dropdown_options = []
-        # for k, v in cat_attr_dict.items():
-        #     if v == "review rate number" and focused_attribute == "rating":
-        #         continue
-        #
-        #     if v != y_choice:
-        #         dropdown_options.append({"label": k, "value": v})
+
         for option in cat_attr_list:
             if option != y_choice:
                 dropdown_options.append(option)
@@ -284,19 +288,12 @@ if __name__ == '__main__':
         the same attribute options by default, if an attribute is selected in either of these dropdowns, then it should
         be removed from the other. Additionally, if the "focused attribute" is "rating", then the "review rate
         number" attribute is removed from both dropdowns' options, since combining average rating and review rate number
-        in the heatmap does not make sense semantically.
+        in the heatmap does not make sense semantically
         :param x_choice: the value currently selected in the "X axis" dropdown
-        :param focused_attribute: the value of the selected focused attribute
         :return: the updated list of dropdown options
         """
-
         dropdown_options = []
-        # for k, v in cat_attr_dict.items():
-        #     if v == "review rate number" and focused_attribute == "rating":
-        #         continue
-        #
-        #     if v != x_choice:
-        #         dropdown_options.append({"label": k, "value": v})
+
         for option in cat_attr_list:
             if option != x_choice:
                 dropdown_options.append(option)
