@@ -1,4 +1,5 @@
 import json
+import warnings
 
 import pandas as pd
 import plotly.express as px
@@ -8,6 +9,8 @@ from config import focused_attributes, def_state_ranking_weights
 from main import app
 from views.menu import make_menu_layout
 from dash.dependencies import Input, Output
+
+warnings.filterwarnings("ignore", category=FutureWarning)
 
 
 def enhance_df_with_state_ranking_score(target_df, score_weights):
@@ -40,7 +43,7 @@ def enhance_df_with_state_ranking_score(target_df, score_weights):
     return pd.merge(target_df, score_df, on='State')
 
 
-def update_choropleth(target_df, focused_attribute, selected_establishment_sizes=None, aggregation='mean'):
+def update_choropleth(target_df, focused_attribute):
     """
     Used to update the choropleth figure
     :param target_df: the dataframe containing the data that will be used by the choropleth figure
@@ -49,25 +52,16 @@ def update_choropleth(target_df, focused_attribute, selected_establishment_sizes
     :param aggregation: string that defines the aggregation we want to apply to our data within the choropleth
     :return: a figure object representing the generated choropleth figure
     """
-    # Filter target_df based on the selected establishment sizes
-    if selected_establishment_sizes is None:
-        selected_establishment_sizes = []
-    target_df = target_df[target_df['Business size'].isin(selected_establishment_sizes)]
-
-    aggr_str_mapping = {'mean': 'Mean',
-                        'min': 'Min.', 'max': 'Max.'}
-
-    agg_attribute = aggr_str_mapping[aggregation] + ' ' + focused_attribute
-
-    # Perform the selected aggregation on the dataframe
-    target_df[agg_attribute] = target_df.groupby("State")[focused_attribute].transform(aggregation)
+    # If the focused attribute is "#Establishments". perform a "sum" aggregation
+    if focused_attribute == "#Establishments":
+        target_df["#Establishments"] = target_df.groupby("State")["#Establishments"].transform("sum")
 
     fig = px.choropleth(data_frame=target_df,
                         locations="State code",
                         locationmode="USA-states",
                         hover_name="State",
                         scope="usa",
-                        color=agg_attribute,
+                        color=focused_attribute,
                         color_continuous_scale='greens',
                         )
     fig.update_layout(margin=dict(t=0, r=0, l=0, b=0))
@@ -75,54 +69,8 @@ def update_choropleth(target_df, focused_attribute, selected_establishment_sizes
     return fig
 
 
-# def update_histogram(target_df, focused_attribute, selected_data=None, selected_establishment_sizes=None):
-#     """
-#     Used to update the histogram figure
-#     :param target_df: the dataframe containing the data that will be used by PCP
-#     :param focused_attribute: the attribute of target_df we want to visualize on PCP
-#     :param selected_data: contains the data points selected using the "lasso" or "box selection" tool of the choropleth
-#     figure; None if no such selection is made
-#     :param selected_establishment_sizes: list containing the selected establishment size strings
-#     :return: a figure object representing the generated histogram figure
-#     """
-#     # Filter target_df based on the selected establishment sizes
-#     if selected_establishment_sizes is None:
-#         selected_establishment_sizes = []
-#     target_df = target_df[target_df['Business size'].isin(selected_establishment_sizes)]
-#
-#     if selected_data:
-#         # If a data selection is provided, filter target_df accordingly
-#         states = [x['location'] for x in selected_data['points']]
-#         target_df = target_df[target_df['State code'].isin(states)]
-#
-#     fig = px.histogram(target_df[focused_attribute])
-#     fig.update_xaxes(title="Value")
-#     fig.update_yaxes(title="Count")
-#     fig.update_layout(legend=dict(
-#         orientation="h",
-#         yanchor="bottom",
-#         y=1.02,
-#         xanchor="left",
-#     ))
-#     fig.update_layout(legend_title_text='Variable:', margin=dict(r=10, b=4, t=4, l=3))
-#
-#     return fig
-
-# def update_scatter_plot(target_df, selected_data, focused_attribute, level, aggregation="mean"):
-
-
-    # fig.add_trace(Scatter(
-    #         x=selected_tsne[0],
-    #         y=selected_tsne[1],
-    #         mode="markers",
-    #         marker={'color': 'red'},
-    #         name="Selected Regions",
-    #         hovertext=tsne_cities.index
-    #     ))
-    #
-    # fig.update_layout(margin=dict(t=0, r=0, l=0, b=0))
-    # fig.update_coloraxes(showscale=False)
-    # return fig
+def update_scatter_plot(target_df):
+    return px.scatter(target_df, x="#Establishments", y="Bachelor\'s Degree Holders", color="Region")
 
 
 if __name__ == '__main__':
@@ -133,14 +81,11 @@ if __name__ == '__main__':
     # Set the default focused attribute
     default_focused_attr = focused_attributes[0]
 
-    # Initialize choropleth figure
-    choropleth_fig = update_choropleth(cbp_df, default_focused_attr)
-
-    # # Initialize histogram figure
-    # histogram_fig = update_histogram(cbp_df, default_focused_attr)
+    # Initialize choropleth figure - ATTENTION: Make sure to use a deep copy of the original dataset!
+    choropleth_fig = update_choropleth(cbp_df.copy(), default_focused_attr)
 
     # Initialize scatterplot figure
-    scatterplot_fig = px.scatter(cbp_df, x="#Establishments", y="Bachelor\'s Degree Holders", color="Region")
+    scatterplot_fig = update_scatter_plot(cbp_df.copy())
 
     app.layout = html.Div(
         id="app-container",
@@ -173,7 +118,12 @@ if __name__ == '__main__':
                        "background-color": 'rgba(0, 0, 255, 0.0)'},
                 children=[
                     html.H5('#Establishments/#Degree holders/Region analysis'),
-                    dcc.Graph(id='scatter-plot', figure=scatterplot_fig)
+                    dcc.Loading(
+                        id="loading-2",
+                        type="default",
+                        children=[html.Div(id="loading-output-scatter-plot"),
+                                  dcc.Graph(id='scatter-plot', figure=scatterplot_fig)]
+                    ),
                 ]
             )
             # Right column / histogram and heatmap
@@ -200,42 +150,52 @@ if __name__ == '__main__':
         Output("choropleth-mapbox", "figure"),
         Output("loading-output-choropleth", "children"),
         Input("select-focused-attribute", "value"),
-        Input("aggregation-dropdown", "value"),
         Input("establishment-size-checklist", "value"),
         Input("score-weight-1", "value"),
         Input("score-weight-2", "value"))
-    def update_choropleth_view(focused_attribute, aggregate_func, selected_establishment_sizes, score_weight_1, score_weight_2):
-        # Generate a new dataframe using target_df that also includes the calculated ranking score for each state
-        if score_weight_1 is None or score_weight_2 is None:
-            # if either input is "None", use the default weights
-            score_weight_1 = def_state_ranking_weights["weight_1"]
-            score_weight_2 = def_state_ranking_weights["weight_2"]
-        score_weights = {"weight_1": score_weight_1, "weight_2": score_weight_2}
-        cbp_df_with_score = enhance_df_with_state_ranking_score(cbp_df, score_weights)
+    def update_choropleth_view(focused_attribute, selected_establishment_sizes, score_weight_1, score_weight_2):
+        # Create a deep copy of the original dataframe which can be freely modified for this callback
+        original_df = cbp_df.copy()
 
-        return update_choropleth(cbp_df_with_score, focused_attribute, selected_establishment_sizes=selected_establishment_sizes,
-                                 aggregation=aggregate_func), None
+        # Filter target_df based on the selected establishment sizes
+        if selected_establishment_sizes is None:
+            selected_establishment_sizes = []
+        processed_df = original_df[original_df['Business size'].isin(selected_establishment_sizes)]
+        # print("===============================================================================================")
+        # print("=============DIAG cbp_df")
+        # print(cbp_df.to_markdown())
+        #
+        # print("=============DIAG original_df")
+        # print(original_df.to_markdown())
+
+        # Only calculate the state ranking score if filtered_df is NOT empty
+        if not processed_df.empty:
+            # Generate a new dataframe using target_df that also includes the calculated ranking score for each state
+            if score_weight_1 is None or score_weight_2 is None:
+                # if either input is "None", use the default weights
+                score_weight_1 = def_state_ranking_weights["weight_1"]
+                score_weight_2 = def_state_ranking_weights["weight_2"]
+            score_weights = {"weight_1": score_weight_1, "weight_2": score_weight_2}
+            processed_df = enhance_df_with_state_ranking_score(processed_df, score_weights)
+
+        # print("=============DIAG processed_df")
+        # print(processed_df.to_markdown())
+        return update_choropleth(processed_df, focused_attribute), None
 
 
-    # @app.callback(
-    #     Output("histogram", "figure"),
-    #     Output("loading-output-histogram", "children"),
-    #     Input('choropleth-mapbox', 'selectedData'),
-    #     Input("select-focused-attribute", "value"),
-    #     Input("establishment-size-checklist", "value"),
-    #     Input("score-weight-1", "value"),
-    #     Input("score-weight-2", "value"))
-    # def update_histogram_view(selected_data, focused_attribute, selected_establishment_sizes, score_weight_1, score_weight_2):
-    #     # Generate a new dataframe using target_df that also includes the calculated ranking score for each state
-    #     if score_weight_1 is None or score_weight_2 is None:
-    #         # if either input is "None", use the default weights
-    #         score_weight_1 = def_state_ranking_weights["weight_1"]
-    #         score_weight_2 = def_state_ranking_weights["weight_2"]
-    #     score_weights = {"weight_1": score_weight_1, "weight_2": score_weight_2}
-    #     cbp_df_with_score = enhance_df_with_state_ranking_score(cbp_df, score_weights)
-    #
-    #     return update_histogram(cbp_df_with_score, focused_attribute, selected_data=selected_data,
-    #                             selected_establishment_sizes=selected_establishment_sizes), None
+    @app.callback(
+        Output("scatter-plot", "figure"),
+        Output("loading-output-scatter-plot", "children"),
+        Input("establishment-size-checklist", "value"))
+    def update_histogram_view(selected_establishment_sizes):
+        # Create a deep copy of the original dataframe which can be freely modified for this callback
+        original_df = cbp_df.copy()
 
+        # Filter target_df based on the selected establishment sizes
+        if selected_establishment_sizes is None:
+            selected_establishment_sizes = []
+        processed_df = original_df[original_df['Business size'].isin(selected_establishment_sizes)]
+
+        return update_scatter_plot(processed_df), None
 
 app.run_server(debug=True, dev_tools_ui=True)

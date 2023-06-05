@@ -54,15 +54,15 @@ def generate_control_card():
                         value=focused_attributes[0],
                         clearable=False
                     ),
-                    html.Label("Aggregate function:", style={"margin-top": "5px"}),
-                    dcc.Dropdown(
-                        # TODO: Rename this id?
-                        id="aggregation-dropdown",
-                        options=[{"label": "Mean", "value": 'mean'}, {"label": "Min.", "value": 'min'},
-                                 {"label": "Max.", "value": 'max'}],
-                        value='mean',
-                        clearable=False
-                    ),
+                    # html.Label("Aggregate function:", style={"margin-top": "5px"}),
+                    # dcc.Dropdown(
+                    #     # TODO: Rename this id?
+                    #     id="aggregation-dropdown",
+                    #     options=[{"label": "Mean", "value": 'mean'}, {"label": "Min.", "value": 'min'},
+                    #              {"label": "Max.", "value": 'max'}],
+                    #     value='mean',
+                    #     clearable=False
+                    # ),
                     html.Label("Establishment size:"),
                     dcc.Checklist(
                         id="establishment-size-checklist",
