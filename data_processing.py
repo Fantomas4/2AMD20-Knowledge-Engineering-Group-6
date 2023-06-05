@@ -1,11 +1,14 @@
 import pandas as pd
 import sweetviz as sv
 
-
 # Load the dataset (example: iris dataset)
 cbp_df = pd.read_csv('datasets/sources/CBP2019.CB1900CBP-2023-05-14T012245.csv')
 bachelor_df = pd.read_csv('datasets/sources/Bachelor_Degree_Majors.csv')
 sr_df = pd.read_csv('datasets/sources/state_regions.csv')
+
+# For cbp_df, we will not be using the "Meaning of Legal form of organization code (LFO_LABEL)" for our analysis.
+# Thus, we proceed to filter cbp_df, so that only the rows where this attribute equals "All establishments" are kept
+cbp_df = cbp_df[(cbp_df["Meaning of Legal form of organization code (LFO_LABEL)"] == "All establishments")]
 
 # Drop any columns from cbp_df that we do not need for our analysis
 columns_to_drop = ["Year (YEAR)", "Meaning of NAICS code (NAICS2017_LABEL)", "2017 NAICS code (NAICS2017)",
@@ -29,7 +32,7 @@ cbp_df.rename(columns=column_rename_mapping, inplace=True)
 # Contradiction mitigation: For the CPB dataset (cbp_df), drop any rows where "Business size" == "All establishments"
 cbp_df = cbp_df[(cbp_df["Business size"] != "All establishments")]
 
-# Contradiction mitigatino: For the Bachelor's dataset, replace all "25 and older" values of the "Age Group" column
+# Contradiction mitigation: For the Bachelor's dataset, replace all "25 and older" values of the "Age Group" column
 # with the value "younger than 25"
 bachelor_df['Age Group'] = bachelor_df['Age Group'].replace('25 and older', 'younger than 25')
 
@@ -174,19 +177,41 @@ for state, group in grouped_df:
 
 cbp_df["#(Mid)Senior degree holders"] = cbp_df["State"].map(state_sum_dict)
 
+# ====== Add a new "(Mid)Senior to total ratio" column to cbp_df that is defined per State as:
+# #(Mid)Senior degree holders/Bachelor's Degree Holders
+# Group the bachelor_df DataFrame by "State" and filter rows where "Sex" is "Total"
+filtered_grouped_df = bachelor_df[bachelor_df['Sex'] == 'Total'].groupby('State')
+
+# Sum the values of "Bachelor's Degree Holders" per state
+degree_holders_per_state = filtered_grouped_df['Bachelor\'s Degree Holders'].sum()
+
+# Group the cbp_df DataFrame by "State"
+grouped_df = cbp_df.groupby("State")
+
+# Sum the values of "#(Mid)Senior degree holders" per state
+midsenior_holders_per_state = grouped_df['#(Mid)Senior degree holders'].sum()
+
+# Calculate the ratio
+ratio = degree_holders_per_state / midsenior_holders_per_state
+
+# Create a new column in cbp_df and map the #Degree Holders/#Business establishments ratios there,
+# based on the "State" value of each entry.
+cbp_df["(Mid)Senior to total ratio"] = cbp_df['State'].map(ratio)
+
+
 # ====== Generate a new "Degree holders to establishments ratio" column that holds the
 # #Degree Holders/#Business establishments ratio per State, taking into consideration both sexes.
 # Group the bachelor_df DataFrame by "State" and filter rows where "Sex" is "Total"
 filtered_df = bachelor_df[bachelor_df['Sex'] == 'Total'].groupby('State')
 
-# Sum the values of "Age Group" per state
+# Sum the values of "Bachelor's Degree Holders" per state
 degree_holders_per_state = filtered_df['Bachelor\'s Degree Holders'].sum()
 
 # Group the cbp_df DataFrame by "State"
-filtered_df = cbp_df.groupby("State")
+grouped_df = cbp_df.groupby("State")
 
 # Sum the values of "Business size" per State
-establishments_per_state = filtered_df["#Establishments"].sum()
+establishments_per_state = grouped_df["#Establishments"].sum()
 
 # Calculate the ratio
 ratio = degree_holders_per_state / establishments_per_state
@@ -197,7 +222,6 @@ cbp_df['Degree holders to establishments ratio'] = cbp_df['State'].map(ratio)
 
 # For the Bachelor's dataset (bachelor_df), drop any rows where "Sex" == "Total"
 bachelor_df = bachelor_df[(bachelor_df["Sex"] != "Total")]
-
 
 # ====================== Adding Extra datasets (other than those provided by the client) =====================
 universities = pd.read_csv('datasets/sources/National Universities Rankings.csv')
@@ -275,28 +299,11 @@ final_extra = pd.merge(business_agg, universities_agg, on='State')
 # Output the dataframe formed using the "extra" datasets as a .csv file
 final_extra.to_csv('datasets/generated/extra_datasets_preprocessed.csv', index=False)
 
-
-# Aggregate per state and per business size
-final_dataset = cbp_df.groupby(['State', 'Business size'], as_index=False).agg({'#Establishments': 'sum', 'Average annual payroll': 'mean',
-                                                              'Average first-quarter payroll': 'mean',
-                                                              'Total #employees': 'sum',
-                                                              'Region': 'first',
-                                                              'Men to women degree holders ratio': 'first',
-                                                             'Most popular degree field': 'first',
-                                                             '2nd Most popular degree field': 'first',
-                                                             '#(Mid)Senior degree holders': 'first',
-                                                             'Degree holders to establishments ratio': 'first',
-                                                            'Science and Engineering': 'first',
-                                                            'Science and Engineering Related Fields': 'first',
-                                                            'Business': 'first', 'Education': 'first',
-                                                            'Arts, Humanities and Others': 'first'})
-
 # TODO: Add comment here
-final_dataset = pd.merge(final_dataset, final_extra, on='State', how='left')
+final_dataset = pd.merge(cbp_df, final_extra, on='State', how='left')
 
 # TODO: Add comment here
 final_dataset['Average #employees'] = final_dataset['Total #employees'] / final_dataset['#Establishments']
-
 
 # Add a new "State code" column to all rows, that contains the 2-letter Alpha Code which of each State
 # Merge cbp_df and states_df based on the "State" column
@@ -305,7 +312,6 @@ merged_df = pd.merge(final_dataset, states_df, on="State", how="left")
 
 # Create a new column "State code" in cbp_df containing the matched "Alpha code" values
 final_dataset["State code"] = merged_df["Alpha code"]
-
 
 # Generate the analysis report
 report_1 = sv.analyze(final_dataset)

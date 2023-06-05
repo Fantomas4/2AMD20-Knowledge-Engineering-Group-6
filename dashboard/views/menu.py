@@ -1,6 +1,6 @@
 from dash import dcc, html
 
-from dashboard.config import focused_attributes, default_pcp_selections, cat_attr_list
+from dashboard.config import focused_attributes
 
 
 def generate_description_card():
@@ -80,36 +80,6 @@ def generate_control_card():
                     )
                 ]
             ),
-            html.Div(
-                children=[
-                    html.Label("Heatmap Options", style={"margin-top": "35px"}),
-                    html.Label("X-axis attribute:", style={"margin-top": "5px"}),
-                    dcc.Dropdown(
-                        id="heatmap-x-axis-dropdown",
-                        options=cat_attr_list,
-                        value=cat_attr_list[0],
-                        clearable=False
-                    ),
-                    html.Label("Y-axis attribute:", style={"margin-top": "5px"}),
-                    dcc.Dropdown(
-                        id="heatmap-y-axis-dropdown",
-                        options=cat_attr_list,
-                        value=cat_attr_list[1],
-                        clearable=False
-                    )
-                ], style={"margin-top": "15px"}
-            ),
-            html.Div(
-                children=[
-                    html.Label("PCP Attributes"),
-                    dcc.Checklist(
-                        id="pcp-checklist",
-                        options=focused_attributes,
-                        value=default_pcp_selections
-                    )
-                ], style={"margin-top": "15px"}
-            )
-
         ], style={"textAlign": "float-left"}
     )
 
