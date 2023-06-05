@@ -4,10 +4,40 @@ import pandas as pd
 import plotly.express as px
 from dash import html, dcc
 
-from config import focused_attributes
+from config import focused_attributes, def_state_ranking_weights
 from main import app
 from views.menu import make_menu_layout
 from dash.dependencies import Input, Output
+
+
+def enhance_df_with_state_ranking_score(target_df, score_weights):
+    # Aggregate target_df to calculate the sum of #Establishments per State (regardless of business size)
+    grouped_agg_df = target_df.groupby('State')['#Establishments'].sum()
+
+    # Converting grouped, aggregated DataFrame to a dictionary
+    state_establishment_count = grouped_agg_df.to_dict()
+
+    # Aggregate target_df to retrieve the "Bachelor's Degree Holders" value per State, using the "first" aggregation
+    grouped_agg_df = target_df.groupby('State')['Bachelor\'s Degree Holders'].first()
+
+    # Converting grouped, aggregated DataFrame to a dictionary
+    state_degree_holders_count = grouped_agg_df.to_dict()
+
+    # Get all distinct State names from target_df
+    distinct_state_values = target_df['State'].unique()
+
+    # Create an empty score dataframe
+    score_df = pd.DataFrame(columns=["State", "State Ranking Score"])
+
+    for state in distinct_state_values:
+        # Calculate the ranking score for the current state
+        score = state_degree_holders_count[state] * score_weights["weight_1"] + \
+                state_establishment_count[state] * score_weights["weight_2"]
+
+        # Append the results to score_df
+        score_df = score_df.append({"State": state, "State Ranking Score": score}, ignore_index=True)
+
+    return pd.merge(target_df, score_df, on='State')
 
 
 def update_choropleth(target_df, focused_attribute, selected_establishment_sizes=None, aggregation='mean'):
@@ -143,9 +173,19 @@ if __name__ == '__main__':
         Output("loading-output-choropleth", "children"),
         Input("select-focused-attribute", "value"),
         Input("aggregation-dropdown", "value"),
-        Input("establishment-size-checklist", "value"))
-    def update_choropleth_view(focused_attribute, aggregate_func, selected_establishment_sizes):
-        return update_choropleth(cbp_df, focused_attribute, selected_establishment_sizes=selected_establishment_sizes,
+        Input("establishment-size-checklist", "value"),
+        Input("score-weight-1", "value"),
+        Input("score-weight-2", "value"))
+    def update_choropleth_view(focused_attribute, aggregate_func, selected_establishment_sizes, score_weight_1, score_weight_2):
+        # Generate a new dataframe using target_df that also includes the calculated ranking score for each state
+        if score_weight_1 is None or score_weight_2 is None:
+            # if either input is "None", use the default weights
+            score_weight_1 = def_state_ranking_weights["weight_1"]
+            score_weight_2 = def_state_ranking_weights["weight_2"]
+        score_weights = {"weight_1": score_weight_1, "weight_2": score_weight_2}
+        cbp_df_with_score = enhance_df_with_state_ranking_score(cbp_df, score_weights)
+
+        return update_choropleth(cbp_df_with_score, focused_attribute, selected_establishment_sizes=selected_establishment_sizes,
                                  aggregation=aggregate_func), \
                "Distribution of {}".format(focused_attribute), \
                None
@@ -156,9 +196,19 @@ if __name__ == '__main__':
         Output("loading-output-histogram", "children"),
         Input('choropleth-mapbox', 'selectedData'),
         Input("select-focused-attribute", "value"),
-        Input("establishment-size-checklist", "value"))
-    def update_histogram_view(selected_data, focused_attribute, selected_establishment_sizes):
-        return update_histogram(cbp_df, focused_attribute, selected_data=selected_data,
+        Input("establishment-size-checklist", "value"),
+        Input("score-weight-1", "value"),
+        Input("score-weight-2", "value"))
+    def update_histogram_view(selected_data, focused_attribute, selected_establishment_sizes, score_weight_1, score_weight_2):
+        # Generate a new dataframe using target_df that also includes the calculated ranking score for each state
+        if score_weight_1 is None or score_weight_2 is None:
+            # if either input is "None", use the default weights
+            score_weight_1 = def_state_ranking_weights["weight_1"]
+            score_weight_2 = def_state_ranking_weights["weight_2"]
+        score_weights = {"weight_1": score_weight_1, "weight_2": score_weight_2}
+        cbp_df_with_score = enhance_df_with_state_ranking_score(cbp_df, score_weights)
+
+        return update_histogram(cbp_df_with_score, focused_attribute, selected_data=selected_data,
                                 selected_establishment_sizes=selected_establishment_sizes), None
 
 

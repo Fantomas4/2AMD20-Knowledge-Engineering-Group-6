@@ -1,6 +1,6 @@
 from dash import dcc, html
 
-from dashboard.config import focused_attributes
+from dashboard.config import focused_attributes, def_state_ranking_weights
 
 
 def generate_description_card():
@@ -17,7 +17,7 @@ def generate_description_card():
                          html.Div(
                              id="intro",
                              children=[
-                                 #TODO: Change description
+                                 # TODO: Change description
                                  "This dashboard offers an overview of data related το the software development business market in the USA,"
                                  "also integrating data related to the expertise and background of potential employees, such as university "
                                  "rankings.",
@@ -80,6 +80,23 @@ def generate_control_card():
                     )
                 ]
             ),
+            html.Div(
+                children=[
+                    html.Label("Ranking Score"),
+                    html.Label("#Degree holders weight"),
+                    dcc.Input(
+                        id="score-weight-1",
+                        type="number",
+                        placeholder="Weight 1",
+                        value=def_state_ranking_weights["weight_1"]),
+                    html.Label("#Establishments weight"),
+                    dcc.Input(
+                        id="score-weight-2",
+                        type="number",
+                        placeholder="Weight 2",
+                        value=def_state_ranking_weights["weight_2"])
+                ], style={"margin-top": "15px"}
+            )
         ], style={"textAlign": "float-left"}
     )
 

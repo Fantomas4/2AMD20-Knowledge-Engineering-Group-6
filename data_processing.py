@@ -102,11 +102,13 @@ cbp_df['Men to women degree holders ratio'] = cbp_df['State'].map(ratio)
 filtered_df = bachelor_df[bachelor_df["Sex"] == "Total"]
 
 # TODO: Add comment here
-degrees_dataset = filtered_df.groupby(['State'], as_index=False).agg({'Science and Engineering': 'sum',
+degrees_dataset = filtered_df.groupby(['State'], as_index=False).agg({'Bachelor\'s Degree Holders': 'sum',
+                                                                      'Science and Engineering': 'sum',
                                                                       'Science and Engineering Related Fields': 'sum',
                                                                       'Business': 'sum',
                                                                       'Education': 'sum',
                                                                       'Arts, Humanities and Others': 'sum'})
+
 
 # Group the filtered DataFrame by "State"
 filtered_df = bachelor_df[bachelor_df["Sex"] == "Total"]
@@ -148,7 +150,7 @@ for state, group in grouped_df:
 cbp_df["2nd Most popular degree field"] = cbp_df["State"].map(state_column_dict)
 
 # TODO: Add comment here
-cbp_df = pd.merge(cbp_df, degrees_dataset[['State', 'Science and Engineering',
+cbp_df = pd.merge(cbp_df, degrees_dataset[['State', 'Bachelor\'s Degree Holders', 'Science and Engineering',
                                            'Science and Engineering Related Fields',
                                            'Business', 'Education', 'Arts, Humanities and Others']],
                   on='State', how='left')
@@ -312,6 +314,11 @@ merged_df = pd.merge(final_dataset, states_df, on="State", how="left")
 
 # Create a new column "State code" in cbp_df containing the matched "Alpha code" values
 final_dataset["State code"] = merged_df["Alpha code"]
+
+
+# ==================== Display and export dataframe ====================
+# print final_dataset in the terminal using markdown
+print(final_dataset.to_markdown())
 
 # Generate the analysis report
 report_1 = sv.analyze(final_dataset)

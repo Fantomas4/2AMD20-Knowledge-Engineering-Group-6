@@ -1,4 +1,8 @@
 # Here you can add any global configurations
+def_state_ranking_weights = {
+    "weight_1": 1,
+    "weight_2": 0.7
+}
 
 focused_attributes = ["#Establishments",
                       # "Average annual payroll",
@@ -10,6 +14,7 @@ focused_attributes = ["#Establishments",
                       "Rate establishments born",
                       "Rate establishments exited",
                       "Rate born - exited",
+                      "State Ranking Score"
                       # "Min rank",
                       # "Average rank",
                       # "Max rank"
