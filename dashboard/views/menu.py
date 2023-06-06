@@ -87,13 +87,13 @@ def generate_control_card():
                     dcc.Input(
                         id="score-weight-1",
                         type="number",
-                        placeholder="Weight 1",
+                        placeholder="Using default value: {}".format(def_state_ranking_weights["weight_1"]),
                         value=def_state_ranking_weights["weight_1"]),
                     html.Label("#Establishments weight"),
                     dcc.Input(
                         id="score-weight-2",
                         type="number",
-                        placeholder="Weight 2",
+                        placeholder="Using default value: {}".format(def_state_ranking_weights["weight_2"]),
                         value=def_state_ranking_weights["weight_2"])
                 ], style={"margin-top": "15px"}
             )

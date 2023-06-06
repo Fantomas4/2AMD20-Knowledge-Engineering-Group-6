@@ -75,7 +75,20 @@ def update_choropleth(target_df, focused_attribute):
 
 
 def update_scatter_plot(target_df):
-    return px.scatter(target_df, x="#Establishments", y="Bachelor\'s Degree Holders", color="Region")
+    fig = px.scatter(target_df,
+                     x="#Establishments",
+                     y="Bachelor\'s Degree Holders",
+                     color="Region",
+                     hover_data=["Region",
+                                 "State",
+                                 "#Establishments",
+                                 'Bachelor\'s Degree Holders',
+                                 'Men to women degree holders ratio',
+                                 '(Mid)Senior to total ratio',
+                                 '#(Mid)Senior degree holders']
+                     )
+
+    return fig
 
 
 if __name__ == '__main__':
