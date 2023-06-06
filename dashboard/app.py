@@ -52,9 +52,9 @@ def update_choropleth(target_df, focused_attribute):
     :param aggregation: string that defines the aggregation we want to apply to our data within the choropleth
     :return: a figure object representing the generated choropleth figure
     """
-    # If the focused attribute is "#Establishments". perform a "sum" aggregation
-    if focused_attribute == "#Establishments":
-        target_df["#Establishments"] = target_df.groupby("State")["#Establishments"].transform("sum")
+    # Perform the required "sum" aggregations for specific attributes
+    target_df["#Establishments"] = target_df.groupby("State")["#Establishments"].transform("sum")
+    target_df["Bachelor\'s Degree Holders"] = target_df.groupby("State")["Bachelor\'s Degree Holders"].transform("sum")
 
     fig = px.choropleth(data_frame=target_df,
                         locations="State code",
@@ -63,6 +63,11 @@ def update_choropleth(target_df, focused_attribute):
                         scope="usa",
                         color=focused_attribute,
                         color_continuous_scale='greens',
+                        hover_data=["#Establishments",
+                                    'Bachelor\'s Degree Holders',
+                                    'Men to women degree holders ratio',
+                                    '(Mid)Senior to total ratio',
+                                    '#(Mid)Senior degree holders']
                         )
     fig.update_layout(margin=dict(t=0, r=0, l=0, b=0))
 
