@@ -80,6 +80,19 @@ def generate_control_card():
                     )
                 ]
             ),
+            # html.Div(
+            #     children=[
+            #         html.Label("Scatter Plot Filters"),
+            #         html.Label("Visualized degree field"),
+            #         dcc.Dropdown(
+            #             # TODO: Rename this id?
+            #             id="degree-field-dropdown",
+            #             options=degree_field_options,
+            #             value=degree_field_options[0],
+            #             clearable=False
+            #         )
+            #     ], style={"margin-top": "15px"}
+            # ),
             html.Div(
                 children=[
                     html.Label("Ranking Score"),

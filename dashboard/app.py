@@ -21,7 +21,7 @@ def enhance_df_with_state_ranking_score(target_df, score_weights):
     state_establishment_count = grouped_agg_df.to_dict()
 
     # Aggregate target_df to retrieve the "Bachelor's Degree Holders" value per State, using the "first" aggregation
-    grouped_agg_df = target_df.groupby('State')['Bachelor\'s Degree Holders'].first()
+    grouped_agg_df = target_df.groupby('State')['#Bachelor\'s degree holders'].first()
 
     # Converting grouped, aggregated DataFrame to a dictionary
     state_degree_holders_count = grouped_agg_df.to_dict()
@@ -54,7 +54,7 @@ def update_choropleth(target_df, focused_attribute):
     """
     # Perform the required "sum" aggregations for specific attributes
     target_df["#Establishments"] = target_df.groupby("State")["#Establishments"].transform("sum")
-    target_df["Bachelor\'s Degree Holders"] = target_df.groupby("State")["Bachelor\'s Degree Holders"].transform("sum")
+    target_df["#Bachelor\'s degree holders"] = target_df.groupby("State")["#Bachelor\'s degree holders"].transform("sum")
 
     fig = px.choropleth(data_frame=target_df,
                         locations="State code",
@@ -64,7 +64,7 @@ def update_choropleth(target_df, focused_attribute):
                         color=focused_attribute,
                         color_continuous_scale='greens',
                         hover_data=["#Establishments",
-                                    'Bachelor\'s Degree Holders',
+                                    '#Bachelor\'s degree holders',
                                     'Men to women degree holders ratio',
                                     '(Mid)Senior to total ratio',
                                     '#(Mid)Senior degree holders']
@@ -75,14 +75,28 @@ def update_choropleth(target_df, focused_attribute):
 
 
 def update_scatter_plot(target_df):
+    # Perform the required "sum" aggregations for specific attributes
+    target_df["#Establishments"] = target_df.groupby("State")["#Establishments"].transform("sum")
+    target_df["#Bachelor\'s degree holders"] = target_df.groupby("State")["#Bachelor\'s degree holders"].transform("sum")
+    target_df["#Science and Engineering degree holders"] = target_df.groupby("State")["#Science and Engineering degree holders"].transform("sum")
+    target_df["#Science and Engineering Related Fields degree holders"] = target_df.groupby("State")["#Science and Engineering Related Fields degree holders"].transform("sum")
+    target_df["#Business degree holders"] = target_df.groupby("State")["#Business degree holders"].transform("sum")
+    target_df["#Education degree holders"] = target_df.groupby("State")["#Education degree holders"].transform("sum")
+    target_df["#Arts, Humanities and Others degree holders"] = target_df.groupby("State")["#Arts, Humanities and Others degree holders"].transform("sum")
+
     fig = px.scatter(target_df,
                      x="#Establishments",
-                     y="Bachelor\'s Degree Holders",
+                     y="#Bachelor\'s degree holders",
                      color="Region",
                      hover_data=["Region",
                                  "State",
                                  "#Establishments",
-                                 'Bachelor\'s Degree Holders',
+                                 '#Bachelor\'s degree holders',
+                                 '#Science and Engineering degree holders',
+                                 '#Science and Engineering Related Fields degree holders',
+                                 '#Business degree holders',
+                                 '#Education degree holders',
+                                 '#Arts, Humanities and Others degree holders',
                                  'Men to women degree holders ratio',
                                  '(Mid)Senior to total ratio',
                                  '#(Mid)Senior degree holders']
@@ -204,8 +218,9 @@ if __name__ == '__main__':
     @app.callback(
         Output("scatter-plot", "figure"),
         Output("loading-output-scatter-plot", "children"),
+        # Input("degree-field-dropdown", "value"),
         Input("establishment-size-checklist", "value"))
-    def update_histogram_view(selected_establishment_sizes):
+    def update_scatter_plot_view(selected_establishment_sizes):
         # Create a deep copy of the original dataframe which can be freely modified for this callback
         original_df = cbp_df.copy()
 

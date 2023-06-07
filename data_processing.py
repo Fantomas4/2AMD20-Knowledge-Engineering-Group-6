@@ -222,8 +222,16 @@ ratio = degree_holders_per_state / establishments_per_state
 # based on the "State" value of each entry.
 cbp_df['Degree holders to establishments ratio'] = cbp_df['State'].map(ratio)
 
-# For the Bachelor's dataset (bachelor_df), drop any rows where "Sex" == "Total"
-bachelor_df = bachelor_df[(bachelor_df["Sex"] != "Total")]
+# Rename certain columns so that the new names properly reflect their meaning
+column_rename_mapping = {
+    "Bachelor's Degree Holders": "#Bachelor's degree holders",
+    "Science and Engineering": "#Science and Engineering degree holders",
+    "Science and Engineering Related Fields": "#Science and Engineering Related Fields degree holders",
+    "Business": "#Business degree holders",
+    "Education": "#Education degree holders",
+    "Arts, Humanities and Others": "#Arts, Humanities and Others degree holders"
+}
+cbp_df.rename(columns=column_rename_mapping, inplace=True)
 
 # ====================== Adding Extra datasets (other than those provided by the client) =====================
 universities = pd.read_csv('datasets/sources/National Universities Rankings.csv')
@@ -328,4 +336,3 @@ report_1.show_html('final_report.html')
 
 print("> Saving preprocessed datasets to .csv files...")
 final_dataset.to_csv('datasets/generated/final_preprocessed.csv', index=False)
-bachelor_df.to_csv('datasets/generated/Bachelor_preprocessed.csv', index=False)

@@ -19,3 +19,12 @@ focused_attributes = ["#Establishments",
                       # "Average rank",
                       # "Max rank"
                       ]
+
+# degree_field_options = [
+#     "All fields",
+#     "Science and Engineering",
+#     "Science and Engineering Related Fields",
+#     "Business",
+#     "Arts, Humanities and Others",
+#     "Education"
+# ]
