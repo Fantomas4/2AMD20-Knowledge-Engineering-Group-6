@@ -1,7 +1,7 @@
 # Here you can add any global configurations
 def_state_ranking_weights = {
     "weight_1": 1,
-    "weight_2": 0.7
+    "weight_2": -0.7
 }
 
 focused_attributes = ["#Establishments",

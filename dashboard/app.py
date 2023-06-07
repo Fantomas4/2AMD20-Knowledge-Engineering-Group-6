@@ -40,7 +40,19 @@ def enhance_df_with_state_ranking_score(target_df, score_weights):
         # Append the results to score_df
         score_df = score_df.append({"State": state, "State Ranking Score": score}, ignore_index=True)
 
-    return pd.merge(target_df, score_df, on='State')
+    # Merge target_df and score_df
+    merged_df = pd.merge(target_df, score_df, on='State')
+
+    # Sort merged_df in descending state ranking score order
+    sorted_df = merged_df.sort_values("State Ranking Score", ascending=False)
+
+    # Reset the index to reflect the new row order
+    sorted_df.reset_index(inplace=True, drop=True)
+
+    # Assign the row order number to the 'column_name' column
+    sorted_df['State Ranking Score'] = sorted_df['State Ranking Score'].rank(ascending=False, method='dense')
+
+    return sorted_df
 
 
 def update_choropleth(target_df, focused_attribute):
@@ -56,13 +68,21 @@ def update_choropleth(target_df, focused_attribute):
     target_df["#Establishments"] = target_df.groupby("State")["#Establishments"].transform("sum")
     target_df["#Bachelor\'s degree holders"] = target_df.groupby("State")["#Bachelor\'s degree holders"].transform("sum")
 
+    # If the focused attribute is "State Ranking Score", inverse the continues color scale to achieve an appropriate
+    # semantic meaning (rank 1 -> darker green, rank 45 -> lighter green)
+    if focused_attribute == "State Ranking Score":
+        color_continuous_scale = "greens_r"
+    else:
+        color_continuous_scale = "greens"
+
+
     fig = px.choropleth(data_frame=target_df,
                         locations="State code",
                         locationmode="USA-states",
                         hover_name="State",
                         scope="usa",
                         color=focused_attribute,
-                        color_continuous_scale='greens',
+                        color_continuous_scale=color_continuous_scale,
                         hover_data=["#Establishments",
                                     '#Bachelor\'s degree holders',
                                     'Men to women degree holders ratio',
@@ -212,6 +232,7 @@ if __name__ == '__main__':
 
         # print("=============DIAG processed_df")
         # print(processed_df.to_markdown())
+        print(processed_df.to_markdown())
         return update_choropleth(processed_df, focused_attribute), None
 
 
