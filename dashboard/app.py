@@ -218,9 +218,9 @@ if __name__ == '__main__':
     @app.callback(
         Output("scatter-plot", "figure"),
         Output("loading-output-scatter-plot", "children"),
-        # Input("degree-field-dropdown", "value"),
+        Input('choropleth-mapbox', 'selectedData'),
         Input("establishment-size-checklist", "value"))
-    def update_scatter_plot_view(selected_establishment_sizes):
+    def update_scatter_plot_view(selected_data, selected_establishment_sizes):
         # Create a deep copy of the original dataframe which can be freely modified for this callback
         original_df = cbp_df.copy()
 
@@ -228,6 +228,13 @@ if __name__ == '__main__':
         if selected_establishment_sizes is None:
             selected_establishment_sizes = []
         processed_df = original_df[original_df['Business size'].isin(selected_establishment_sizes)]
+
+        # If a choropleth map selection was made, filter the data based on that
+        if selected_data:
+            print(selected_data)
+            # If a data selection is provided, filter target_df accordingly
+            states = [x['location'] for x in selected_data['points']]
+            processed_df = processed_df[processed_df["State code"].isin(states)]
 
         return update_scatter_plot(processed_df), None
 
