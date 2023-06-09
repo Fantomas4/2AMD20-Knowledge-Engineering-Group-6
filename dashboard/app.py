@@ -66,7 +66,6 @@ def update_choropleth(target_df, focused_attribute):
     """
     # Perform the required "sum" aggregations for specific attributes
     target_df["#Establishments"] = target_df.groupby("State")["#Establishments"].transform("sum")
-    target_df["#Bachelor\'s degree holders"] = target_df.groupby("State")["#Bachelor\'s degree holders"].transform("sum")
 
     # If the focused attribute is "State Ranking Score", inverse the continues color scale to achieve an appropriate
     # semantic meaning (rank 1 -> darker green, rank 45 -> lighter green)
@@ -97,12 +96,6 @@ def update_choropleth(target_df, focused_attribute):
 def update_scatter_plot(target_df):
     # Perform the required "sum" aggregations for specific attributes
     target_df["#Establishments"] = target_df.groupby("State")["#Establishments"].transform("sum")
-    target_df["#Bachelor\'s degree holders"] = target_df.groupby("State")["#Bachelor\'s degree holders"].transform("sum")
-    target_df["#Science and Engineering degree holders"] = target_df.groupby("State")["#Science and Engineering degree holders"].transform("sum")
-    target_df["#Science and Engineering Related Fields degree holders"] = target_df.groupby("State")["#Science and Engineering Related Fields degree holders"].transform("sum")
-    target_df["#Business degree holders"] = target_df.groupby("State")["#Business degree holders"].transform("sum")
-    target_df["#Education degree holders"] = target_df.groupby("State")["#Education degree holders"].transform("sum")
-    target_df["#Arts, Humanities and Others degree holders"] = target_df.groupby("State")["#Arts, Humanities and Others degree holders"].transform("sum")
 
     fig = px.scatter(target_df,
                      x="#Establishments",
@@ -209,6 +202,10 @@ if __name__ == '__main__':
         # Create a deep copy of the original dataframe which can be freely modified for this callback
         original_df = cbp_df.copy()
 
+        #TODO: DIAG ONLY!
+        print("=============> ORIGINAL DF")
+        print(original_df.to_markdown())
+
         # Filter target_df based on the selected establishment sizes
         if selected_establishment_sizes is None:
             selected_establishment_sizes = []
@@ -232,6 +229,7 @@ if __name__ == '__main__':
 
         # print("=============DIAG processed_df")
         # print(processed_df.to_markdown())
+        print("=============> processed DF")
         print(processed_df.to_markdown())
         return update_choropleth(processed_df, focused_attribute), None
 
