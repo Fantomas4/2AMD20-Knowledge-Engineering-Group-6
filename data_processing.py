@@ -323,6 +323,18 @@ merged_df = pd.merge(final_dataset, states_df, on="State", how="left")
 # Create a new column "State code" in cbp_df containing the matched "Alpha code" values
 final_dataset["State code"] = merged_df["Alpha code"]
 
+# Drop any attributes from final_dataset that are determined to be irrelevant for our analysis
+drop_column_names = ["Max rank",
+                     "Min rank",
+                     "State with top universities",
+                     "Most popular degree field",
+                     "2nd Most popular degree field",
+                     "Average annual payroll",
+                     "Average first-quarter payroll",
+                     "Rate establishments born",
+                     "Rate establishments exited"]
+final_dataset = final_dataset.drop(columns=drop_column_names)
+
 
 # ==================== Display and export dataframe ====================
 # print final_dataset in the terminal using markdown
