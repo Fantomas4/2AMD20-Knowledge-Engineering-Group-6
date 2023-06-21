@@ -11,8 +11,15 @@ sr_df = pd.read_csv('datasets/sources/state_regions.csv')
 cbp_df = cbp_df[(cbp_df["Meaning of Legal form of organization code (LFO_LABEL)"] == "All establishments")]
 
 # Drop any columns from cbp_df that we do not need for our analysis
-columns_to_drop = ["Year (YEAR)", "Meaning of NAICS code (NAICS2017_LABEL)", "2017 NAICS code (NAICS2017)",
-                   "Meaning of Legal form of organization code (LFO_LABEL)"]
+columns_to_drop = [
+                   "Year (YEAR)",
+                   "Meaning of NAICS code (NAICS2017_LABEL)",
+                   "2017 NAICS code (NAICS2017)",
+                   "Annual payroll ($1,000) (PAYANN)",
+                   "First-quarter payroll ($1,000) (PAYQTR1)",
+                   "Meaning of Legal form of organization code (LFO_LABEL)"
+                   ]
+
 cbp_df = cbp_df.drop(columns_to_drop, axis=1)
 
 # Since we dropped some columns, some rows have become duplicates of others. Thus, we proceed to drop them.
@@ -23,8 +30,8 @@ column_rename_mapping = {
     "Geographic Area Name (NAME)": "State",
     "Meaning of Employment size of establishments code (EMPSZES_LABEL)": "Business size",
     "Number of establishments (ESTAB)": "#Establishments",
-    "Annual payroll ($1,000) (PAYANN)": "Average annual payroll",
-    "First-quarter payroll ($1,000) (PAYQTR1)": "Average first-quarter payroll",
+    # "Annual payroll ($1,000) (PAYANN)": "Average annual payroll",
+    # "First-quarter payroll ($1,000) (PAYQTR1)": "Average first-quarter payroll",
     "Number of employees (EMP)": "Total #employees"
 }
 cbp_df.rename(columns=column_rename_mapping, inplace=True)
@@ -32,9 +39,13 @@ cbp_df.rename(columns=column_rename_mapping, inplace=True)
 # Contradiction mitigation: For the CPB dataset (cbp_df), drop any rows where "Business size" == "All establishments"
 cbp_df = cbp_df[(cbp_df["Business size"] != "All establishments")]
 
-# Contradiction mitigation: For the Bachelor's dataset, replace all "25 and older" values of the "Age Group" column
-# with the value "younger than 25"
-bachelor_df['Age Group'] = bachelor_df['Age Group'].replace('25 and older', 'younger than 25')
+# TODO: How about this?
+# Contradiction mitigation: For the bachelor's dataset, replace all "25 and older" values of the "Age Group" column with "
+
+# TODO: Remove this!
+# # Contradiction mitigation: For the Bachelor's dataset, replace all "25 and older" values of the "Age Group" column
+# # with the value "younger than 25"
+# bachelor_df['Age Group'] = bachelor_df['Age Group'].replace('25 and older', 'younger than 25')
 
 # For the CPB dataset (cbp_df), only keep the rows where the value of the "Business size" attribute refers to a company
 # that represents a "major" competitor, according to our client's criteria
@@ -69,8 +80,12 @@ for column in bachelor_df.columns:
     bachelor_df[column] = bachelor_df[column].str.replace(',', '')
 
 # Convert cbp_df number columns to numeric values
-numeric_columns = ["#Establishments", "Average annual payroll", "Average first-quarter payroll",
-                   "Total #employees"]
+numeric_columns = [
+                   "#Establishments",
+                   # "Average annual payroll",
+                   # "Average first-quarter payroll",
+                   "Total #employees"
+                  ]
 cbp_df[numeric_columns] = cbp_df[numeric_columns].apply(pd.to_numeric)
 
 # Convert bachelor_df number columns to numeric values
@@ -97,60 +112,66 @@ ratio = male_counts / female_counts
 # Create a new column in cbp_df and map the men/women ratios there based on the "State" value of each entry.
 cbp_df['Men to women degree holders ratio'] = cbp_df['State'].map(ratio)
 
-# == Determine the field that has the largest and second-largest number of graduates per State
-# Filter the dataset to keep only rows where "Sex" is equal to "Total"
-filtered_df = bachelor_df[bachelor_df["Sex"] == "Total"]
+# TODO: Remove this?
+# # == Determine the field that has the largest and second-largest number of graduates per State
+# # Filter the dataset to keep only rows where "Sex" is equal to "Total"
+# filtered_df = bachelor_df[bachelor_df["Sex"] == "Total"]
+#
+# # TODO: Add comment here
+# degrees_dataset = filtered_df.groupby(['State'], as_index=False).agg({'Bachelor\'s Degree Holders': 'sum',
+#                                                                       'Science and Engineering': 'sum',
+#                                                                       'Science and Engineering Related Fields': 'sum',
+#                                                                       'Business': 'sum',
+#                                                                       'Education': 'sum',
+#                                                                       'Arts, Humanities and Others': 'sum'})
 
-# TODO: Add comment here
-degrees_dataset = filtered_df.groupby(['State'], as_index=False).agg({'Bachelor\'s Degree Holders': 'sum',
-                                                                      'Science and Engineering': 'sum',
-                                                                      'Science and Engineering Related Fields': 'sum',
-                                                                      'Business': 'sum',
-                                                                      'Education': 'sum',
-                                                                      'Arts, Humanities and Others': 'sum'})
-
-
+# TODO: Remove this?
 # Group the filtered DataFrame by "State"
-filtered_df = bachelor_df[bachelor_df["Sex"] == "Total"]
-grouped_df = filtered_df.groupby("State")
+# filtered_df = bachelor_df[bachelor_df["Sex"] == "Total"]
+# grouped_df = filtered_df.groupby("State")
 
-# Create an empty dictionary to store the results
-state_column_dict = {}
+# # Create an empty dictionary to store the results
+# state_column_dict = {}
 
-# == Determine the most popular field of studies
-# Iterate over each distinct value of "State"
-for state, group in grouped_df:
-    # Calculate the summed values for each column
-    summed_values = group[["Science and Engineering", "Science and Engineering Related Fields", "Business", "Education",
-                           "Arts, Humanities and Others"]].sum()
+# TODO: Remove this?
+# # == Determine the most popular field of studies
+# # Iterate over each distinct value of "State"
+# for state, group in grouped_df:
+#     # Calculate the summed values for each column
+#     summed_values = group[["Science and Engineering", "Science and Engineering Related Fields", "Business", "Education",
+#                            "Arts, Humanities and Others"]].sum()
+#
+#     # Find the column with the highest summed value
+#     max_column = summed_values.idxmax()
+#
+#     # Save the column name to the state:column dictionary
+#     state_column_dict[state] = max_column
+#
+# # Add the new column to the bachelor_df dataframe
+# cbp_df["Most popular degree field"] = cbp_df["State"].map(state_column_dict)
 
-    # Find the column with the highest summed value
-    max_column = summed_values.idxmax()
+# TODO: Remove this?
+# # ==== Determine the 2nd most popular field of studies
+# # Iterate over each distinct value of "State"
+# for state, group in grouped_df:
+#     # Calculate the summed values for each column
+#     summed_values = group[["Science and Engineering", "Science and Engineering Related Fields", "Business", "Education",
+#                            "Arts, Humanities and Others"]].sum()
+#
+#     # Sort the summed values in descending order and get the column name with the second largest summed value
+#     second_largest_column = summed_values.sort_values(ascending=False).index[1]
+#
+#     # Save the column name to the state:column dictionary
+#     state_column_dict[state] = second_largest_column
+#
+# # Add the new column to the bachelor_df dataframe
+# cbp_df["2nd Most popular degree field"] = cbp_df["State"].map(state_column_dict)
 
-    # Save the column name to the state:column dictionary
-    state_column_dict[state] = max_column
+# Filter the dataset to keep only rows where "Sex" is equal to "Total" and "Age Group" is equal to "25 and older"
+filtered_bachelor_df = bachelor_df[(bachelor_df["Sex"] == "Total") & (bachelor_df["Age Group"] == "25 and older")]
 
-# Add the new column to the bachelor_df dataframe
-cbp_df["Most popular degree field"] = cbp_df["State"].map(state_column_dict)
-
-# ==== Determine the 2nd most popular field of studies
-# Iterate over each distinct value of "State"
-for state, group in grouped_df:
-    # Calculate the summed values for each column
-    summed_values = group[["Science and Engineering", "Science and Engineering Related Fields", "Business", "Education",
-                           "Arts, Humanities and Others"]].sum()
-
-    # Sort the summed values in descending order and get the column name with the second largest summed value
-    second_largest_column = summed_values.sort_values(ascending=False).index[1]
-
-    # Save the column name to the state:column dictionary
-    state_column_dict[state] = second_largest_column
-
-# Add the new column to the bachelor_df dataframe
-cbp_df["2nd Most popular degree field"] = cbp_df["State"].map(state_column_dict)
-
-# TODO: Add comment here
-cbp_df = pd.merge(cbp_df, degrees_dataset[['State', 'Bachelor\'s Degree Holders', 'Science and Engineering',
+# Merge the cbf and bachelor's datasets, keeping only selected columns of bachelor's df
+cbp_df = pd.merge(cbp_df, filtered_bachelor_df[['State', 'Bachelor\'s Degree Holders', 'Science and Engineering',
                                            'Science and Engineering Related Fields',
                                            'Business', 'Education', 'Arts, Humanities and Others']],
                   on='State', how='left')
@@ -182,19 +203,20 @@ cbp_df["#(Mid)Senior degree holders"] = cbp_df["State"].map(state_sum_dict)
 # ====== Add a new "(Mid)Senior to total ratio" column to cbp_df that is defined per State as:
 # #(Mid)Senior degree holders/Bachelor's Degree Holders
 # Group the bachelor_df DataFrame by "State" and filter rows where "Sex" is "Total"
-filtered_grouped_df = bachelor_df[bachelor_df['Sex'] == 'Total'].groupby('State')
+filtered_grouped_df = bachelor_df[(bachelor_df['Sex'] == 'Total') & (bachelor_df["Age Group"] == "25 and older")].groupby("State")
 
 # Sum the values of "Bachelor's Degree Holders" per state
-degree_holders_per_state = filtered_grouped_df['Bachelor\'s Degree Holders'].sum()
+degree_holders_per_state = filtered_grouped_df['Bachelor\'s Degree Holders'].first()
 
 # Group the cbp_df DataFrame by "State"
 grouped_df = cbp_df.groupby("State")
 
 # Sum the values of "#(Mid)Senior degree holders" per state
-midsenior_holders_per_state = grouped_df['#(Mid)Senior degree holders'].sum()
+midsenior_holders_per_state = grouped_df['#(Mid)Senior degree holders'].first()
 
 # Calculate the ratio
-ratio = degree_holders_per_state / midsenior_holders_per_state
+ratio = midsenior_holders_per_state / degree_holders_per_state
+
 
 # Create a new column in cbp_df and map the #Degree Holders/#Business establishments ratios there,
 # based on the "State" value of each entry.
@@ -233,10 +255,21 @@ column_rename_mapping = {
 }
 cbp_df.rename(columns=column_rename_mapping, inplace=True)
 
+
 # ====================== Adding Extra datasets (other than those provided by the client) =====================
 universities = pd.read_csv('datasets/sources/National Universities Rankings.csv')
 business = pd.read_csv('datasets/sources/BDSTIMESERIES.BDSGEO-2023-05-31T192640.csv')
 pd.set_option('display.max_columns', None)
+
+#===== Add dataset with states abbreviations to work with universities ranking
+states = pd.read_csv('datasets/sources/state_names.csv')
+
+universities['State Abbr'] = universities['Location'].str[-2:]
+
+merged = pd.merge(universities, states, left_on='State Abbr', right_on='Alpha code')
+
+# Add full state name
+universities['State'] = merged['State']
 
 # Rename the columns of business to make them easier to work with
 column_rename_mapping = {
@@ -247,6 +280,25 @@ column_rename_mapping = {
 }
 business.rename(columns=column_rename_mapping, inplace=True)
 
+# Get the non-common values between the "State" columns of the 2 datasets (cbp_df and universities)
+symmetric_difference = pd.Series(list(set(universities['State']).symmetric_difference(set(cbp_df['State']))))
+print("\n> States included in Universities but not in CBP dataset: {}".format(len(symmetric_difference)))
+print(symmetric_difference)
+
+# We will to drop the rows in universities that contain any of the non-common (State) values.
+universities = universities[~universities['State'].isin(symmetric_difference.tolist())]
+
+# Get the non-common values between the "State" columns of the 2 datasets (cbp_df and business)
+symmetric_difference = pd.Series(list(set(business['State']).symmetric_difference(set(cbp_df['State']))))
+print("\n> States included in Business Dynamics but not in CBP dataset: {}".format(len(symmetric_difference)))
+print(symmetric_difference)
+
+# We will to drop the rows in business_agg that contain any of the non-common (State) values.
+business = business[~business['State'].isin(symmetric_difference.tolist())]
+
+
+# ====== Generate a new "Rate born - exited" column that holds the difference between number of businesses born and
+# the number of businesses exited per state over the last decade
 business = business[['State', 'Year', "Rate establishments born", "Rate establishments exited"]]
 # Select the data for the last decade
 business_recent = business[(business['Year'] >= 2009) & (business['Year'] <= 2019)]
@@ -260,48 +312,29 @@ business_agg.reset_index(inplace=True)
 business_agg['Rate born - exited'] = business_agg['Rate establishments born'] - business_agg[
     'Rate establishments exited']
 
-# Get the non-common values between the "State" columns of the 2 datasets (df_1 and business)
-symmetric_difference = pd.Series(list(set(business_agg['State']).symmetric_difference(set(cbp_df['State']))))
-print("\n> States included in Business Dynamics but not in CBP dataset: {}".format(len(symmetric_difference)))
-print(symmetric_difference)
 
-# We will to drop the rows in business_agg that contain any of the non-common (State) values.
-business_agg = business_agg[~business_agg['State'].isin(symmetric_difference.tolist())]
-
-# Add dataset with states abbreviatios to work with universities ranking
-states = pd.read_csv('datasets/sources/state_names.csv')
-
-universities['State Abbr'] = universities['Location'].str[-2:]
-
-merged = pd.merge(universities, states, left_on='State Abbr', right_on='Alpha code')
-
-# Add full state name
-universities['State'] = merged['State']
-
-# Select necessary columns
+# Select necessary columns from universities df
 universities = universities[['Name', 'Rank', 'State']]
 
-symmetric_difference = pd.Series(list(set(universities['State']).symmetric_difference(set(cbp_df['State']))))
-print("\n> States included in Universities but not in CBP dataset: {}".format(len(symmetric_difference)))
-print(symmetric_difference)
+universities_agg = universities.groupby('State')[['Rank']].mean()
+universities_agg.rename(columns={"Rank": "Average rank"}, inplace=True)
+print(universities_agg)
 
-# We will to drop the rows in universities that contain any of the non-common (State) values.
-universities = universities[~universities['State'].isin(symmetric_difference.tolist())]
-
-# Average, max and min rating of universities in a state: the LOWER the better (because rating starts at 1 = best university)
-universities_agg = universities.groupby('State')[['Rank']].agg({'mean', 'max', 'min'})
-universities_agg.reset_index(inplace=True)
-universities_agg.columns = universities_agg.columns.droplevel()
-
-universities_agg.rename(columns={"mean": "Average rank", 'max': 'Max rank', 'min': 'Min rank', '': 'State'},
-                        inplace=True)
-
-sorted_df = universities_agg.sort_values('Min rank')
-# Top 10 states based on ranking
-best_states = sorted_df.head(10)['State'].tolist()
-
-universities_agg['State with top universities'] = universities_agg.apply(
-    lambda x: 'Yes' if x['State'] in best_states else 'No', axis=1)
+# TODO: Remove this?
+# # Average, max and min rating of universities in a state: the LOWER the better (because rating starts at 1 = best university)
+# universities_agg = universities.groupby('State')[['Rank']].agg({'mean', 'max', 'min'})
+# universities_agg.reset_index(inplace=True)
+# universities_agg.columns = universities_agg.columns.droplevel()
+#
+# universities_agg.rename(columns={"mean": "Average rank", 'max': 'Max rank', 'min': 'Min rank', '': 'State'},
+#                         inplace=True)
+#
+# sorted_df = universities_agg.sort_values('Min rank')
+# # Top 10 states based on ranking
+# best_states = sorted_df.head(10)['State'].tolist()
+#
+# universities_agg['State with top universities'] = universities_agg.apply(
+#     lambda x: 'Yes' if x['State'] in best_states else 'No', axis=1)
 
 # Join business dynamics and universities datasets
 final_extra = pd.merge(business_agg, universities_agg, on='State')
@@ -324,13 +357,14 @@ merged_df = pd.merge(final_dataset, states_df, on="State", how="left")
 final_dataset["State code"] = merged_df["Alpha code"]
 
 # Drop any attributes from final_dataset that are determined to be irrelevant for our analysis
-drop_column_names = ["Max rank",
-                     "Min rank",
-                     "State with top universities",
-                     "Most popular degree field",
-                     "2nd Most popular degree field",
-                     "Average annual payroll",
-                     "Average first-quarter payroll",
+drop_column_names = [
+                     # "Max rank",
+                     # "Min rank",
+                     # "State with top universities",
+                     # "Most popular degree field",
+                     # "2nd Most popular degree field",
+                     # "Average annual payroll",
+                     # "Average first-quarter payroll",
                      "Rate establishments born",
                      "Rate establishments exited"]
 final_dataset = final_dataset.drop(columns=drop_column_names)

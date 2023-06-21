@@ -162,7 +162,7 @@ if __name__ == '__main__':
                 style={"padding": 0,
                        "background-color": 'rgba(0, 0, 255, 0.0)'},
                 children=[
-                    html.H5('#Establishments/#Degree holders/Region analysis'),
+                    html.H5('Scatter plot'),
                     dcc.Loading(
                         id="loading-2",
                         type="default",
