@@ -202,10 +202,6 @@ if __name__ == '__main__':
         # Create a deep copy of the original dataframe which can be freely modified for this callback
         original_df = cbp_df.copy()
 
-        #TODO: DIAG ONLY!
-        print("=============> ORIGINAL DF")
-        print(original_df.to_markdown())
-
         # Filter target_df based on the selected establishment sizes
         if selected_establishment_sizes is None:
             selected_establishment_sizes = []

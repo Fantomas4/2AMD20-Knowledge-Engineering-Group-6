@@ -17,19 +17,9 @@ def generate_description_card():
                          html.Div(
                              id="intro",
                              children=[
-                                 # TODO: Change description
                                  "This dashboard offers an overview of data related το the software development business market in the USA,"
                                  "also integrating data related to the expertise and background of potential employees, such as university "
-                                 "rankings.",
-                                 html.Br(), html.Br(),
-                                 "You may start by choosing the attribute of interest (focused attribute). "
-                                 "You are also given control over the categorical attributes represented in the heatmap's axis.",
-                                 html.Br(), html.Br(),
-                                 "Additionally, the \"Parallel Coordinates Plot\" (PCP) view is interactive and allows for the re-arrangement"
-                                 " of its coordinates axes to further investigate possible correlations.",
-                                 html.Br(), html.Br(),
-                                 "Note that using the \"lasso\" or \"box selection\" tool embedded in the choropleth view to select "
-                                 "specific areas of the map will also affect the data presented in the rest of the views (interaction)."]
+                                 "rankings."]
                          ),
                      ]),
         ])
@@ -48,21 +38,11 @@ def generate_control_card():
                 children=[
                     html.Label("Focused Attribute"),
                     dcc.Dropdown(
-                        # TODO: Rename this id?
                         id="select-focused-attribute",
                         options=focused_attributes,
                         value=focused_attributes[0],
                         clearable=False
                     ),
-                    # html.Label("Aggregate function:", style={"margin-top": "5px"}),
-                    # dcc.Dropdown(
-                    #     # TODO: Rename this id?
-                    #     id="aggregation-dropdown",
-                    #     options=[{"label": "Mean", "value": 'mean'}, {"label": "Min.", "value": 'min'},
-                    #              {"label": "Max.", "value": 'max'}],
-                    #     value='mean',
-                    #     clearable=False
-                    # ),
                     html.Label("Establishment size:"),
                     dcc.Checklist(
                         id="establishment-size-checklist",
@@ -80,19 +60,6 @@ def generate_control_card():
                     )
                 ]
             ),
-            # html.Div(
-            #     children=[
-            #         html.Label("Scatter Plot Filters"),
-            #         html.Label("Visualized degree field"),
-            #         dcc.Dropdown(
-            #             # TODO: Rename this id?
-            #             id="degree-field-dropdown",
-            #             options=degree_field_options,
-            #             value=degree_field_options[0],
-            #             clearable=False
-            #         )
-            #     ], style={"margin-top": "15px"}
-            # ),
             html.Div(
                 children=[
                     html.Label("Ranking Score"),

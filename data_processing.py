@@ -39,13 +39,6 @@ cbp_df.rename(columns=column_rename_mapping, inplace=True)
 # Contradiction mitigation: For the CPB dataset (cbp_df), drop any rows where "Business size" == "All establishments"
 cbp_df = cbp_df[(cbp_df["Business size"] != "All establishments")]
 
-# TODO: How about this?
-# Contradiction mitigation: For the bachelor's dataset, replace all "25 and older" values of the "Age Group" column with "
-
-# TODO: Remove this!
-# # Contradiction mitigation: For the Bachelor's dataset, replace all "25 and older" values of the "Age Group" column
-# # with the value "younger than 25"
-# bachelor_df['Age Group'] = bachelor_df['Age Group'].replace('25 and older', 'younger than 25')
 
 # For the CPB dataset (cbp_df), only keep the rows where the value of the "Business size" attribute refers to a company
 # that represents a "major" competitor, according to our client's criteria
@@ -112,60 +105,6 @@ ratio = male_counts / female_counts
 # Create a new column in cbp_df and map the men/women ratios there based on the "State" value of each entry.
 cbp_df['Men to women degree holders ratio'] = cbp_df['State'].map(ratio)
 
-# TODO: Remove this?
-# # == Determine the field that has the largest and second-largest number of graduates per State
-# # Filter the dataset to keep only rows where "Sex" is equal to "Total"
-# filtered_df = bachelor_df[bachelor_df["Sex"] == "Total"]
-#
-# # TODO: Add comment here
-# degrees_dataset = filtered_df.groupby(['State'], as_index=False).agg({'Bachelor\'s Degree Holders': 'sum',
-#                                                                       'Science and Engineering': 'sum',
-#                                                                       'Science and Engineering Related Fields': 'sum',
-#                                                                       'Business': 'sum',
-#                                                                       'Education': 'sum',
-#                                                                       'Arts, Humanities and Others': 'sum'})
-
-# TODO: Remove this?
-# Group the filtered DataFrame by "State"
-# filtered_df = bachelor_df[bachelor_df["Sex"] == "Total"]
-# grouped_df = filtered_df.groupby("State")
-
-# # Create an empty dictionary to store the results
-# state_column_dict = {}
-
-# TODO: Remove this?
-# # == Determine the most popular field of studies
-# # Iterate over each distinct value of "State"
-# for state, group in grouped_df:
-#     # Calculate the summed values for each column
-#     summed_values = group[["Science and Engineering", "Science and Engineering Related Fields", "Business", "Education",
-#                            "Arts, Humanities and Others"]].sum()
-#
-#     # Find the column with the highest summed value
-#     max_column = summed_values.idxmax()
-#
-#     # Save the column name to the state:column dictionary
-#     state_column_dict[state] = max_column
-#
-# # Add the new column to the bachelor_df dataframe
-# cbp_df["Most popular degree field"] = cbp_df["State"].map(state_column_dict)
-
-# TODO: Remove this?
-# # ==== Determine the 2nd most popular field of studies
-# # Iterate over each distinct value of "State"
-# for state, group in grouped_df:
-#     # Calculate the summed values for each column
-#     summed_values = group[["Science and Engineering", "Science and Engineering Related Fields", "Business", "Education",
-#                            "Arts, Humanities and Others"]].sum()
-#
-#     # Sort the summed values in descending order and get the column name with the second largest summed value
-#     second_largest_column = summed_values.sort_values(ascending=False).index[1]
-#
-#     # Save the column name to the state:column dictionary
-#     state_column_dict[state] = second_largest_column
-#
-# # Add the new column to the bachelor_df dataframe
-# cbp_df["2nd Most popular degree field"] = cbp_df["State"].map(state_column_dict)
 
 # Filter the dataset to keep only rows where "Sex" is equal to "Total" and "Age Group" is equal to "25 and older"
 filtered_bachelor_df = bachelor_df[(bachelor_df["Sex"] == "Total") & (bachelor_df["Age Group"] == "25 and older")]
@@ -320,21 +259,6 @@ universities_agg = universities.groupby('State')[['Rank']].mean()
 universities_agg.rename(columns={"Rank": "Average rank"}, inplace=True)
 print(universities_agg)
 
-# TODO: Remove this?
-# # Average, max and min rating of universities in a state: the LOWER the better (because rating starts at 1 = best university)
-# universities_agg = universities.groupby('State')[['Rank']].agg({'mean', 'max', 'min'})
-# universities_agg.reset_index(inplace=True)
-# universities_agg.columns = universities_agg.columns.droplevel()
-#
-# universities_agg.rename(columns={"mean": "Average rank", 'max': 'Max rank', 'min': 'Min rank', '': 'State'},
-#                         inplace=True)
-#
-# sorted_df = universities_agg.sort_values('Min rank')
-# # Top 10 states based on ranking
-# best_states = sorted_df.head(10)['State'].tolist()
-#
-# universities_agg['State with top universities'] = universities_agg.apply(
-#     lambda x: 'Yes' if x['State'] in best_states else 'No', axis=1)
 
 # Join business dynamics and universities datasets
 final_extra = pd.merge(business_agg, universities_agg, on='State')
@@ -342,10 +266,11 @@ final_extra = pd.merge(business_agg, universities_agg, on='State')
 # Output the dataframe formed using the "extra" datasets as a .csv file
 final_extra.to_csv('datasets/generated/extra_datasets_preprocessed.csv', index=False)
 
-# TODO: Add comment here
+# Merge cbp_df and final_extra on "State"
 final_dataset = pd.merge(cbp_df, final_extra, on='State', how='left')
 
-# TODO: Add comment here
+
+# ====== Generate a new "Average #employees" attribute
 final_dataset['Average #employees'] = final_dataset['Total #employees'] / final_dataset['#Establishments']
 
 # Add a new "State code" column to all rows, that contains the 2-letter Alpha Code which of each State
@@ -357,16 +282,8 @@ merged_df = pd.merge(final_dataset, states_df, on="State", how="left")
 final_dataset["State code"] = merged_df["Alpha code"]
 
 # Drop any attributes from final_dataset that are determined to be irrelevant for our analysis
-drop_column_names = [
-                     # "Max rank",
-                     # "Min rank",
-                     # "State with top universities",
-                     # "Most popular degree field",
-                     # "2nd Most popular degree field",
-                     # "Average annual payroll",
-                     # "Average first-quarter payroll",
-                     "Rate establishments born",
-                     "Rate establishments exited"]
+drop_column_names = ["Rate establishments born", "Rate establishments exited"]
+
 final_dataset = final_dataset.drop(columns=drop_column_names)
 
 
